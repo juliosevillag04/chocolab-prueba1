@@ -1,10 +1,19 @@
 # =========================================================
+# Universidad Americana (UAM)
+# Facultad de Ingeniería y Arquitectura (FIA)
+# Carrera: Ingeniería de Sistemas
+# Asignatura: Álgebra Lineal
+# Grupo 4 - Integrantes:
+# Julio Javier Sevilla Gallegos
+# Docente: Carlos Iván Argüello Martínez
+# =========================================================
 # LÓGICA DEL PROGRAMA
 # Calculadora de Álgebra Lineal - Choco Lab
 # =========================================================
 #
 # Este archivo contiene únicamente la lógica matemática.
 # =========================================================
+import re
 
 
 TOLERANCIA = 1e-10
@@ -203,6 +212,241 @@ def validar_matriz_aumentada(matriz, numero_variables):
 
 
 # =========================================================
+# CONVERSIÓN DE ECUACIONES A MATRIZ AUMENTADA
+# =========================================================
+
+_PATRON_NUMERO = (
+    r"(?:\d+(?:[.,]\d*)?|[.,]\d+)"
+    r"(?:[eE][+-]?\d+)?"
+)
+
+# Una variable comienza con una letra y puede continuar con letras,
+# números o guion bajo. Ejemplos: f, g12, presion2, variable_a.
+_PATRON_VARIABLE = r"(?:[a-zA-Z][a-zA-Z0-9_]*)"
+
+_PATRON_TERMINO = re.compile(
+    rf"[+-](?:{_PATRON_NUMERO}(?:\*?{_PATRON_VARIABLE})?|{_PATRON_VARIABLE})"
+)
+
+
+def _leer_expresion_lineal(expresion, nombres_variables):
+    """
+    Lee uno de los lados de una ecuación lineal.
+
+    Acepta, por ejemplo:
+    x + 2y - 3.5z + 4
+    x1 + 2x2 - 3.5x3 + 4
+
+    También se pueden mezclar ambas notaciones.
+    """
+
+    expresion = expresion.lower()
+    expresion = expresion.replace("−", "-")
+    expresion = expresion.replace("–", "-")
+    expresion = expresion.replace("·", "*")
+    expresion = expresion.translate(
+        str.maketrans("₀₁₂₃₄₅₆₇₈₉", "0123456789")
+    )
+    expresion = "".join(expresion.split())
+
+    if expresion == "":
+        raise ValueError("Falta un lado de la ecuación.")
+
+    if expresion[0] not in "+-":
+        expresion = "+" + expresion
+
+    coeficientes = [0.0] * len(nombres_variables)
+    constante = 0.0
+    posicion = 0
+
+    while posicion < len(expresion):
+
+        coincidencia = _PATRON_TERMINO.match(
+            expresion,
+            posicion
+        )
+
+        if coincidencia is None:
+            raise ValueError(
+                "La ecuación contiene un término no válido. "
+                "Usa un formato como x + 2y - 3z = 9 o "
+                "x1 + 2x2 - 3x3 = 9."
+            )
+
+        termino = coincidencia.group()
+        posicion = coincidencia.end()
+
+        signo = -1.0 if termino[0] == "-" else 1.0
+        contenido = termino[1:]
+
+        variable = re.fullmatch(
+            rf"(?:(?P<coeficiente>{_PATRON_NUMERO})\*?)?"
+            rf"(?P<variable>{_PATRON_VARIABLE})",
+            contenido
+        )
+
+        if variable is not None:
+
+            nombre_variable = variable.group("variable").lower()
+
+            if nombre_variable not in nombres_variables:
+                raise ValueError(
+                    f"La variable «{nombre_variable}» no pertenece a las "
+                    "variables definidas para este sistema."
+                )
+
+            indice = nombres_variables.index(nombre_variable)
+
+            texto_coeficiente = variable.group("coeficiente")
+
+            if texto_coeficiente is None:
+                coeficiente = 1.0
+            else:
+                coeficiente = float(
+                    texto_coeficiente.replace(",", ".")
+                )
+
+            coeficientes[indice] += signo * coeficiente
+
+        else:
+
+            constante += signo * float(
+                contenido.replace(",", ".")
+            )
+
+    return coeficientes, constante
+
+
+def extraer_variables(ecuacion):
+    """Obtiene los nombres de variables en su orden de aparición."""
+
+    if not isinstance(ecuacion, str):
+        raise TypeError("La ecuación debe escribirse como texto.")
+
+    texto = ecuacion.translate(
+        str.maketrans("₀₁₂₃₄₅₆₇₈₉", "0123456789")
+    )
+    nombres = []
+
+    for nombre in re.findall(_PATRON_VARIABLE, texto):
+        nombre = nombre.lower()
+        if nombre not in nombres:
+            nombres.append(nombre)
+
+    return nombres
+
+
+def convertir_ecuacion_a_fila(
+    ecuacion,
+    numero_variables,
+    nombres_variables=None
+):
+    """
+    Convierte una ecuación lineal en una fila de matriz aumentada.
+
+    Ejemplos:
+    x + 2y + 3z = 9      ->  [1.0, 2.0, 3.0, 9.0]
+    x1 + 2x2 + 3x3 = 9   ->  [1.0, 2.0, 3.0, 9.0]
+
+    También permite constantes o variables en ambos lados. Todos los
+    términos se reorganizan automáticamente antes de formar la fila.
+    """
+
+    if not isinstance(ecuacion, str):
+        raise TypeError("La ecuación debe escribirse como texto.")
+
+    if not isinstance(numero_variables, int) or numero_variables <= 0:
+        raise ValueError("El número de variables debe ser positivo.")
+
+    if ecuacion.count("=") != 1:
+        raise ValueError(
+            "La ecuación debe contener exactamente un signo =."
+        )
+
+    if nombres_variables is None:
+        nombres_variables = extraer_variables(ecuacion)
+
+        if len(nombres_variables) > numero_variables:
+            raise ValueError(
+                f"La ecuación usa {len(nombres_variables)} variables, pero "
+                f"el sistema está configurado para {numero_variables}."
+            )
+
+        while len(nombres_variables) < numero_variables:
+            nombres_variables.append(f"__variable_{len(nombres_variables) + 1}")
+
+    if len(nombres_variables) != numero_variables:
+        raise ValueError("La cantidad de nombres de variables no coincide con el sistema.")
+
+    lado_izquierdo, lado_derecho = ecuacion.split("=")
+
+    coeficientes_izquierdos, constante_izquierda = (
+        _leer_expresion_lineal(
+            lado_izquierdo,
+            nombres_variables
+        )
+    )
+
+    coeficientes_derechos, constante_derecha = (
+        _leer_expresion_lineal(
+            lado_derecho,
+            nombres_variables
+        )
+    )
+
+    fila = []
+
+    for columna in range(numero_variables):
+        fila.append(
+            coeficientes_izquierdos[columna]
+            - coeficientes_derechos[columna]
+        )
+
+    fila.append(
+        constante_derecha - constante_izquierda
+    )
+
+    _limpiar_ceros([fila])
+
+    return fila
+
+
+def convertir_sistema_ecuaciones(ecuaciones, numero_variables):
+    """
+    Convierte todas las ecuaciones usando un único orden de variables.
+
+    El orden se determina por la primera aparición de cada nombre en el
+    sistema. Así, nombres como f, g12 o temperatura3 conservan su identidad.
+    """
+
+    nombres_variables = []
+
+    for ecuacion in ecuaciones:
+        for nombre in extraer_variables(ecuacion):
+            if nombre not in nombres_variables:
+                nombres_variables.append(nombre)
+
+    if len(nombres_variables) != numero_variables:
+        raise ValueError(
+            f"Se encontraron {len(nombres_variables)} variable(s) distinta(s) "
+            f"({', '.join(nombres_variables) if nombres_variables else 'ninguna'}), "
+            f"pero el sistema está configurado para {numero_variables}."
+        )
+
+    matriz = []
+    for ecuacion in ecuaciones:
+        matriz.append(
+            convertir_ecuacion_a_fila(
+                ecuacion,
+                numero_variables,
+                nombres_variables
+            )
+        )
+
+    return matriz, nombres_variables
+
+
+# =========================================================
 # FUNCIONES AUXILIARES PARA LA REDUCCIÓN POR FILAS
 # =========================================================
 
@@ -248,24 +492,44 @@ def _registrar_paso(pasos, fase, operacion, matriz):
 
 def _buscar_mejor_fila_pivote(matriz, fila_inicial, columna, tolerancia):
     """
-    Busca una fila con un valor diferente de cero en la columna pivote.
+    Busca la fila que conviene usar para formar el siguiente pivote.
 
-    Se prefiere el valor absoluto más grande para reducir problemas
-    numéricos con divisiones por números muy pequeños.
+    Prioridad del algoritmo:
+    1. Conservar un 1 si ya está en la posición pivote.
+    2. Buscar un 1 debajo e intercambiar filas.
+    3. Usar un -1, porque se convierte en 1 con un escalamiento simple.
+    4. Si no existe ±1, usar una entrada diferente de cero.
+
+    De esta forma se imita el razonamiento de "aprovechar" un 1 existente
+    antes de crear uno mediante división.
     """
 
-    mejor_fila = None
-    mayor_valor = tolerancia
+    # 1. El pivote actual ya es 1.
+    if abs(matriz[fila_inicial][columna] - 1.0) < tolerancia:
+        return fila_inicial
 
+    # 2. Buscar un 1 en las filas disponibles.
+    for fila in range(fila_inicial + 1, len(matriz)):
+
+        if abs(matriz[fila][columna] - 1.0) < tolerancia:
+            return fila
+
+    # 3. Aprovechar un -1 si existe.
+    if abs(matriz[fila_inicial][columna] + 1.0) < tolerancia:
+        return fila_inicial
+
+    for fila in range(fila_inicial + 1, len(matriz)):
+
+        if abs(matriz[fila][columna] + 1.0) < tolerancia:
+            return fila
+
+    # 4. En ausencia de ±1, usar la primera entrada no nula.
     for fila in range(fila_inicial, len(matriz)):
 
-        valor = abs(matriz[fila][columna])
+        if abs(matriz[fila][columna]) >= tolerancia:
+            return fila
 
-        if valor > mayor_valor:
-            mayor_valor = valor
-            mejor_fila = fila
-
-    return mejor_fila
+    return None
 
 
 def _buscar_fila_inconsistente(matriz, numero_variables, tolerancia):
@@ -305,12 +569,14 @@ def resolver_sistema(matriz_aumentada, numero_variables, tolerancia=TOLERANCIA):
 
     El algoritmo sigue dos fases:
 
-    FASE 1:
-    Produce forma escalonada creando ceros debajo de cada pivote.
+    FASE 1 - GAUSS:
+    En cada columna pivote, primero convierte el pivote en 1 y después
+    crea ceros debajo. Si existe un 1 disponible en una fila inferior,
+    se prefiere intercambiar filas antes que crear el 1 por división.
 
-    FASE 2:
-    Si el sistema es consistente, continúa hasta forma escalonada
-    reducida, convirtiendo los pivotes en 1 y creando ceros arriba.
+    FASE 2 - GAUSS-JORDAN:
+    Si el sistema es consistente, recorre los pivotes desde la derecha
+    hacia la izquierda y crea ceros arriba de cada pivote.
 
     Retorna un diccionario con:
     - clasificación;
@@ -337,7 +603,8 @@ def resolver_sistema(matriz_aumentada, numero_variables, tolerancia=TOLERANCIA):
     fila_pivote = 0
 
     # -----------------------------------------------------
-    # FASE 1: FORMA ESCALONADA
+    # FASE 1: GAUSS
+    # PIVOTE EN 1 Y CEROS DEBAJO
     # -----------------------------------------------------
 
     for columna_pivote in range(numero_variables):
@@ -357,7 +624,7 @@ def resolver_sistema(matriz_aumentada, numero_variables, tolerancia=TOLERANCIA):
         if mejor_fila is None:
             continue
 
-        # Intercambio de filas si el mejor pivote no está arriba.
+        # Si ya existe un 1 útil debajo, se sube mediante intercambio.
         if mejor_fila != fila_pivote:
 
             matriz[fila_pivote], matriz[mejor_fila] = (
@@ -374,9 +641,30 @@ def resolver_sistema(matriz_aumentada, numero_variables, tolerancia=TOLERANCIA):
                 matriz
             )
 
+        # PRIMERO: convertir el pivote actual en 1.
         pivote = matriz[fila_pivote][columna_pivote]
 
-        # Crear ceros debajo del pivote.
+        if abs(pivote - 1.0) >= tolerancia:
+
+            for columna in range(columna_pivote, numero_columnas):
+
+                matriz[fila_pivote][columna] = (
+                    matriz[fila_pivote][columna] / pivote
+                )
+
+            _limpiar_ceros(matriz, tolerancia)
+
+            _registrar_paso(
+                pasos,
+                "escalonamiento",
+                (
+                    f"F{fila_pivote + 1} → "
+                    f"(1/{_numero_corto(pivote)})F{fila_pivote + 1}"
+                ),
+                matriz
+            )
+
+        # DESPUÉS: crear ceros debajo del pivote 1.
         for fila in range(fila_pivote + 1, numero_filas):
 
             elemento = matriz[fila][columna_pivote]
@@ -384,7 +672,7 @@ def resolver_sistema(matriz_aumentada, numero_variables, tolerancia=TOLERANCIA):
             if abs(elemento) < tolerancia:
                 continue
 
-            factor = elemento / pivote
+            factor = elemento
 
             for columna in range(columna_pivote, numero_columnas):
 
@@ -409,6 +697,7 @@ def resolver_sistema(matriz_aumentada, numero_variables, tolerancia=TOLERANCIA):
             (fila_pivote, columna_pivote)
         )
 
+        # La fila del pivote queda terminada y se ignora en la siguiente vuelta.
         fila_pivote += 1
 
     matriz_escalonada = copiar_matriz(matriz)
@@ -430,6 +719,8 @@ def resolver_sistema(matriz_aumentada, numero_variables, tolerancia=TOLERANCIA):
             "clasificacion": "inconsistente",
             "matriz_escalonada": matriz_escalonada,
             "matriz_reducida": matriz_escalonada,
+            "matriz_gauss": matriz_escalonada,
+            "matriz_gauss_jordan": matriz_escalonada,
             "pasos": pasos,
             "pivotes": pivotes,
             "fila_inconsistente": fila_inconsistente,
@@ -438,35 +729,14 @@ def resolver_sistema(matriz_aumentada, numero_variables, tolerancia=TOLERANCIA):
         }
 
     # -----------------------------------------------------
-    # FASE 2: FORMA ESCALONADA REDUCIDA
+    # FASE 2: GAUSS-JORDAN
+    # CEROS ARRIBA, DE DERECHA A IZQUIERDA
     # -----------------------------------------------------
 
     for fila_pivote, columna_pivote in reversed(pivotes):
 
-        pivote = matriz[fila_pivote][columna_pivote]
-
-        # Convertir el pivote en 1.
-        if abs(pivote - 1.0) >= tolerancia:
-
-            for columna in range(columna_pivote, numero_columnas):
-
-                matriz[fila_pivote][columna] = (
-                    matriz[fila_pivote][columna] / pivote
-                )
-
-            _limpiar_ceros(matriz, tolerancia)
-
-            _registrar_paso(
-                pasos,
-                "reduccion",
-                (
-                    f"F{fila_pivote + 1} → "
-                    f"(1/{_numero_corto(pivote)})F{fila_pivote + 1}"
-                ),
-                matriz
-            )
-
-        # Crear ceros arriba del pivote.
+        # En Gauss todos los pivotes ya quedaron convertidos en 1.
+        # Ahora se usa cada pivote para crear ceros por encima.
         for fila in range(fila_pivote):
 
             factor = matriz[fila][columna_pivote]
@@ -527,6 +797,8 @@ def resolver_sistema(matriz_aumentada, numero_variables, tolerancia=TOLERANCIA):
             "clasificacion": "unica",
             "matriz_escalonada": matriz_escalonada,
             "matriz_reducida": matriz_reducida,
+            "matriz_gauss": matriz_escalonada,
+            "matriz_gauss_jordan": matriz_reducida,
             "pasos": pasos,
             "pivotes": pivotes,
             "fila_inconsistente": None,
@@ -538,6 +810,8 @@ def resolver_sistema(matriz_aumentada, numero_variables, tolerancia=TOLERANCIA):
         "clasificacion": "infinitas",
         "matriz_escalonada": matriz_escalonada,
         "matriz_reducida": matriz_reducida,
+        "matriz_gauss": matriz_escalonada,
+        "matriz_gauss_jordan": matriz_reducida,
         "pasos": pasos,
         "pivotes": pivotes,
         "fila_inconsistente": None,

@@ -13,19 +13,20 @@
 # lineales mediante eliminación por filas.
 # =========================================================
 
-
 import os
 import tkinter as tk
 from tkinter import ttk
+from fractions import Fraction
 
 from logica import (
     TOLERANCIA,
+    convertir_ecuacion_a_fila,
+    convertir_sistema_ecuaciones,
     copiar_matriz,
     es_elemento_diagonal,
     resolver_sistema,
     verificar_solucion
 )
-
 
 # =========================================================
 # CONFIGURACIÓN GENERAL
@@ -62,10 +63,15 @@ class ChocoLabApp:
 
         self.matriz_original = None
         self.resultado_actual = None
+        self.nombres_variables = ["x1", "x2", "x3"]
+        self.modo_numeros = tk.StringVar(value="Decimal")
 
         self.entradas_matriz = []
+        self.entradas_ecuaciones = []
         self.etiquetas_filas = []
         self.etiquetas_columnas = []
+
+        self.modo_entrada = "ecuacion"
 
         self.fila_seleccionada = None
         self.columna_seleccionada = None
@@ -77,7 +83,7 @@ class ChocoLabApp:
         self.configurar_ventana()
         self.configurar_estilos()
         self.crear_interfaz()
-        self.crear_matriz_interfaz()
+        self.crear_entrada_actual()
 
     # =====================================================
     # VENTANA
@@ -558,12 +564,12 @@ class ChocoLabApp:
         # FUERA DEL CUADRO MOVIBLE DE LA MATRIZ
         # -------------------------------------------------
 
-        frame_info = ttk.LabelFrame(
+        self.frame_info = ttk.LabelFrame(
             frame_izquierdo,
             text="Información de la celda"
         )
 
-        frame_info.grid(
+        self.frame_info.grid(
             row=1,
             column=0,
             sticky="ew",
@@ -578,7 +584,7 @@ class ChocoLabApp:
         )
 
         self.label_celda = tk.Label(
-            frame_info,
+            self.frame_info,
             textvariable=self.texto_celda,
             font=("Arial", 9),
             fg=COLOR_CHOCOLATE_MEDIO,
@@ -609,6 +615,18 @@ class ChocoLabApp:
             column=0,
             sticky="w",
             pady=(0, 7)
+        )
+
+        self.boton_modo_entrada = ttk.Button(
+            frame_botones,
+            text="Matriz/Ecuación",
+            width=17,
+            command=self.alternar_modo_entrada
+        )
+
+        self.boton_modo_entrada.pack(
+            side="left",
+            padx=(0, 5)
         )
 
         self.boton_resolver = tk.Button(
@@ -655,42 +673,42 @@ class ChocoLabApp:
         # ESTE ES EL ÚNICO CUADRO MOVIBLE DEL LADO IZQUIERDO
         # -------------------------------------------------
 
-        frame_matriz = ttk.LabelFrame(
+        self.frame_datos = ttk.LabelFrame(
             frame_izquierdo,
             text="Matriz aumentada"
         )
 
-        frame_matriz.grid(
+        self.frame_datos.grid(
             row=3,
             column=0,
             sticky="nsew"
         )
 
-        frame_matriz.rowconfigure(
+        self.frame_datos.rowconfigure(
             0,
             weight=1
         )
 
-        frame_matriz.columnconfigure(
+        self.frame_datos.columnconfigure(
             0,
             weight=1
         )
 
         self.canvas_matriz = tk.Canvas(
-            frame_matriz,
+            self.frame_datos,
             bg=COLOR_FONDO,
             highlightthickness=0,
             confine=True
         )
 
         self.scroll_y_matriz = ttk.Scrollbar(
-            frame_matriz,
+            self.frame_datos,
             orient="vertical",
             command=self.canvas_matriz.yview
         )
 
         self.scroll_x_matriz = ttk.Scrollbar(
-            frame_matriz,
+            self.frame_datos,
             orient="horizontal",
             command=self.canvas_matriz.xview
         )
@@ -820,19 +838,99 @@ class ChocoLabApp:
             minsize=380
         )
 
-        tk.Label(
+        frame_encabezado_resultado = tk.Frame(
             frame_derecho,
+            bg=COLOR_FONDO
+        )
+        frame_encabezado_resultado.grid(
+            row=0,
+            column=0,
+            sticky="w",
+            pady=(0, 6)
+        )
+
+        tk.Label(
+            frame_encabezado_resultado,
             text="3. Procedimiento, clasificación y verificación",
             font=("Arial", 11, "bold"),
             fg=COLOR_CHOCOLATE,
             bg=COLOR_FONDO,
             justify="left",
             anchor="w"
-        ).grid(
-            row=0,
-            column=0,
-            sticky="ew",
-            pady=(0, 6)
+        ).pack(
+            side="left"
+        )
+
+        # -------------------------------------------------
+        # VISTA DEL PROCEDIMIENTO
+        # Dos fases / Gauss / Gauss-Jordan
+        # -------------------------------------------------
+
+        self.modo_vista_procedimiento = tk.StringVar(
+            value="Dos fases"
+        )
+
+        self.boton_vista_procedimiento = tk.Menubutton(
+            frame_encabezado_resultado,
+            text="Vista: Dos fases ▾",
+            font=("Arial", 9),
+            fg=COLOR_CHOCOLATE,
+            bg=COLOR_BEIGE,
+            activeforeground=COLOR_CHOCOLATE,
+            activebackground=COLOR_RESALTADO,
+            relief="raised",
+            bd=1,
+            cursor="hand2",
+            padx=8,
+            pady=2
+        )
+
+        self.menu_vista_procedimiento = tk.Menu(
+            self.boton_vista_procedimiento,
+            tearoff=0
+        )
+
+        for opcion in (
+            "Dos fases",
+            "Gauss",
+            "Gauss-Jordan"
+        ):
+
+            self.menu_vista_procedimiento.add_radiobutton(
+                label=opcion,
+                variable=self.modo_vista_procedimiento,
+                value=opcion,
+                command=self.actualizar_vista_procedimiento
+            )
+
+        self.boton_vista_procedimiento.config(
+            menu=self.menu_vista_procedimiento
+        )
+
+        self.boton_vista_procedimiento.pack(
+            side="left",
+            padx=(8, 0),
+            pady=0
+        )
+
+        self.boton_modo_numeros = tk.Button(
+            frame_encabezado_resultado,
+            text="Números: Decimal",
+            font=("Arial", 9),
+            fg=COLOR_CHOCOLATE,
+            bg=COLOR_BEIGE,
+            activeforeground=COLOR_CHOCOLATE,
+            activebackground=COLOR_RESALTADO,
+            relief="raised",
+            bd=1,
+            cursor="hand2",
+            padx=8,
+            pady=2,
+            command=self.alternar_modo_numeros
+        )
+        self.boton_modo_numeros.pack(
+            side="left",
+            padx=(6, 0)
         )
 
         frame_texto = tk.Frame(
@@ -920,7 +1018,7 @@ class ChocoLabApp:
         )
 
         self.escribir_salida(
-            "Completa la matriz aumentada y presiona "
+            "Escribe las ecuaciones del sistema y presiona "
             "«Resolver sistema».\n\n"
             "Atajos:\n"
             "  F11       Pantalla completa\n"
@@ -951,7 +1049,7 @@ class ChocoLabApp:
     def crear_barra_estado(self):
 
         self.mensaje = tk.StringVar(
-            value="Listo. Completa la matriz para comenzar."
+            value="Listo. Escribe las ecuaciones para comenzar."
         )
 
         self.label_estado = tk.Label(
@@ -1252,14 +1350,18 @@ class ChocoLabApp:
 
         self.numero_ecuaciones = ecuaciones
         self.numero_variables = variables
+        self.nombres_variables = [
+            f"x{indice + 1}"
+            for indice in range(variables)
+        ]
 
-        self.crear_matriz_interfaz()
+        self.crear_entrada_actual()
 
         self.limpiar_salida()
 
         self.escribir_salida(
             (
-                f"Se creó una matriz aumentada para "
+                f"Se preparó el sistema para "
                 f"{ecuaciones} ecuación(es) y "
                 f"{variables} variable(s).\n"
             )
@@ -1267,10 +1369,64 @@ class ChocoLabApp:
 
         self.mostrar_mensaje(
             (
-                "Choco dice: matriz preparada. "
+                "Choco dice: sistema preparado. "
                 "Completa todos los valores."
             )
         )
+
+    def crear_entrada_actual(self):
+
+        if self.modo_entrada == "ecuacion":
+            self.crear_ecuaciones_interfaz()
+        else:
+            self.crear_matriz_interfaz()
+
+    def alternar_modo_entrada(self):
+
+        if self.modo_entrada == "matriz":
+            self.modo_entrada = "ecuacion"
+            self.crear_ecuaciones_interfaz()
+
+            self.mostrar_mensaje(
+                (
+                    "Choco dice: modo ecuación activado. "
+                    "Escribe una ecuación completa en cada fila."
+                )
+            )
+
+        else:
+            self.modo_entrada = "matriz"
+            self.crear_matriz_interfaz()
+
+            self.mostrar_mensaje(
+                (
+                    "Choco dice: modo matriz activado. "
+                    "Completa la matriz aumentada."
+                )
+            )
+
+        self.matriz_original = None
+        self.resultado_actual = None
+
+        self.limpiar_salida()
+
+        if self.modo_entrada == "ecuacion":
+            self.escribir_salida(
+                (
+                    "Modo ecuación activado.\n"
+                    "Ejemplos: x + 2y + 3z = 9, f = 7 o 67g12 - 2h = 10\n\n"
+                    "Completa todas las ecuaciones y presiona "
+                    "«Resolver sistema».\n"
+                )
+            )
+        else:
+            self.escribir_salida(
+                (
+                    "Modo matriz activado.\n"
+                    "Completa la matriz aumentada y presiona "
+                    "«Resolver sistema».\n"
+                )
+            )
 
     def crear_matriz_interfaz(self):
 
@@ -1278,11 +1434,28 @@ class ChocoLabApp:
             widget.destroy()
 
         self.entradas_matriz = []
+        self.entradas_ecuaciones = []
         self.etiquetas_filas = []
         self.etiquetas_columnas = []
 
         self.fila_seleccionada = None
         self.columna_seleccionada = None
+
+        self.frame_datos.config(
+            text="Matriz aumentada"
+        )
+
+        self.frame_info.config(
+            text="Información de la celda"
+        )
+
+        self.label_ayuda.config(
+            text=(
+                "Cada fila representa una ecuación. "
+                "Ingresa los coeficientes de x₁, x₂, ... "
+                "y en la columna b escribe el término independiente."
+            )
+        )
 
         tk.Label(
             self.frame_cuadricula,
@@ -1463,6 +1636,133 @@ class ChocoLabApp:
                 self.entradas_matriz[0][0].focus_set()
             )
 
+    def crear_ecuaciones_interfaz(self):
+
+        for widget in self.frame_cuadricula.winfo_children():
+            widget.destroy()
+
+        self.entradas_matriz = []
+        self.entradas_ecuaciones = []
+        self.etiquetas_filas = []
+        self.etiquetas_columnas = []
+
+        self.fila_seleccionada = None
+        self.columna_seleccionada = None
+
+        self.frame_datos.config(
+            text="Sistema en forma de ecuaciones"
+        )
+
+        self.frame_info.config(
+            text="Información de la ecuación"
+        )
+
+        self.label_ayuda.config(
+            text=(
+                "Escribe una ecuación completa en cada fila. Puedes elegir "
+                "cualquier variable que comience con una letra; usa los mismos "
+                "nombres en todo el sistema. Ejemplos: f = 7 o 67g12 - 2h = 10"
+            )
+        )
+
+        tk.Label(
+            self.frame_cuadricula,
+            text="Ecuaciones del sistema",
+            font=("Arial", 9, "bold"),
+            fg=COLOR_CHOCOLATE_MEDIO,
+            bg=COLOR_FONDO
+        ).grid(
+            row=0,
+            column=0,
+            columnspan=2,
+            padx=8,
+            pady=6,
+            sticky="w"
+        )
+
+        for fila in range(self.numero_ecuaciones):
+
+            tk.Label(
+                self.frame_cuadricula,
+                text=f"Ecuación {fila + 1}",
+                font=("Arial", 9, "bold"),
+                fg=COLOR_CHOCOLATE,
+                bg=COLOR_FONDO
+            ).grid(
+                row=fila + 1,
+                column=0,
+                padx=(8, 10),
+                pady=6,
+                sticky="e"
+            )
+
+            entrada = tk.Entry(
+                self.frame_cuadricula,
+                width=48,
+                font=("Arial", 11),
+                justify="left",
+                bg=COLOR_BLANCO,
+                fg=COLOR_CHOCOLATE,
+                relief="solid",
+                bd=1
+            )
+
+            entrada.grid(
+                row=fila + 1,
+                column=1,
+                padx=(0, 10),
+                pady=6,
+                ipady=5,
+                sticky="ew"
+            )
+
+            entrada.bind(
+                "<FocusIn>",
+                lambda event,
+                f=fila:
+                self.seleccionar_ecuacion(f)
+            )
+
+            entrada.bind(
+                "<FocusOut>",
+                lambda event,
+                f=fila:
+                self.validar_ecuacion_visual(f)
+            )
+
+            entrada.bind(
+                "<Return>",
+                lambda event:
+                self.mover_foco_siguiente(event)
+            )
+
+            self.entradas_ecuaciones.append(
+                entrada
+            )
+
+        self.frame_cuadricula.columnconfigure(
+            1,
+            weight=1
+        )
+
+        self.texto_celda.set(
+            (
+                "Selecciona una ecuación para escribirla. "
+                "Ejemplos: x + 2y + 3z = 9, f = 7 o 67g12 - 2h = 10"
+            )
+        )
+
+        self.canvas_matriz.xview_moveto(0)
+        self.canvas_matriz.yview_moveto(0)
+        self.actualizar_region_scroll()
+
+        if self.entradas_ecuaciones:
+            self.ventana.after(
+                100,
+                lambda:
+                self.entradas_ecuaciones[0].focus_set()
+            )
+
     def obtener_base_visible(self):
 
         if self.modo_indices.get() == "programador":
@@ -1471,6 +1771,9 @@ class ChocoLabApp:
         return 1
 
     def actualizar_modo(self):
+
+        if self.modo_entrada == "ecuacion":
+            return
 
         base = self.obtener_base_visible()
 
@@ -1825,6 +2128,54 @@ class ChocoLabApp:
             bg=self.color_normal_celda(columna)
         )
 
+    def seleccionar_ecuacion(self, fila):
+
+        for entrada in self.entradas_ecuaciones:
+
+            if entrada.get().strip() == "":
+                entrada.config(bg=COLOR_BLANCO)
+                continue
+
+            try:
+                convertir_ecuacion_a_fila(
+                    entrada.get(),
+                    self.numero_variables
+                )
+                entrada.config(bg=COLOR_BLANCO)
+            except (TypeError, ValueError):
+                entrada.config(bg=COLOR_ERROR_SUAVE)
+
+        self.entradas_ecuaciones[fila].config(
+            bg=COLOR_RESALTADO
+        )
+
+        self.texto_celda.set(
+            (
+                f"Ecuación {fila + 1}\n"
+                "Puedes elegir cualquier nombre de variable que comience "
+                "con una letra y mantenerlo en todo el sistema.\n"
+                "Ejemplos: x + 2y = 9, f = 7 o 67g12 - 2h = 10"
+            )
+        )
+
+    def validar_ecuacion_visual(self, fila):
+
+        entrada = self.entradas_ecuaciones[fila]
+        texto = entrada.get().strip()
+
+        if texto == "":
+            entrada.config(bg=COLOR_BLANCO)
+            return
+
+        try:
+            convertir_ecuacion_a_fila(
+                texto,
+                self.numero_variables
+            )
+            entrada.config(bg=COLOR_BLANCO)
+        except (TypeError, ValueError):
+            entrada.config(bg=COLOR_ERROR_SUAVE)
+
     def mover_foco_siguiente(self, event):
 
         event.widget.tk_focusNext().focus()
@@ -1906,13 +2257,83 @@ class ChocoLabApp:
 
         return matriz
 
+    def leer_ecuaciones(self):
+
+        ecuaciones = []
+        primera_ecuacion_invalida = None
+        primer_error = None
+
+        for fila in range(self.numero_ecuaciones):
+
+            entrada = self.entradas_ecuaciones[fila]
+            texto = entrada.get().strip()
+
+            if texto == "":
+                entrada.config(bg=COLOR_ERROR_SUAVE)
+
+                if primera_ecuacion_invalida is None:
+                    primera_ecuacion_invalida = fila
+                    primer_error = "La ecuación está vacía."
+
+                continue
+
+            try:
+                convertir_ecuacion_a_fila(
+                    texto,
+                    self.numero_variables
+                )
+                ecuaciones.append(texto)
+                entrada.config(bg=COLOR_BLANCO)
+
+            except (TypeError, ValueError) as error:
+                entrada.config(bg=COLOR_ERROR_SUAVE)
+
+                if primera_ecuacion_invalida is None:
+                    primera_ecuacion_invalida = fila
+                    primer_error = str(error)
+
+        if primera_ecuacion_invalida is not None:
+
+            self.entradas_ecuaciones[
+                primera_ecuacion_invalida
+            ].focus_set()
+
+            self.mostrar_mensaje(
+                (
+                    "Choco dice: revisa la ecuación "
+                    f"{primera_ecuacion_invalida + 1}. "
+                    f"{primer_error}"
+                ),
+                True
+            )
+
+            return None
+
+        try:
+            matriz, nombres = convertir_sistema_ecuaciones(
+                ecuaciones,
+                self.numero_variables
+            )
+            self.nombres_variables = nombres
+            return matriz
+        except (TypeError, ValueError) as error:
+            self.mostrar_mensaje(f"Choco dice: {error}", True)
+            return None
+
     # =====================================================
     # RESOLVER
     # =====================================================
 
     def resolver(self):
 
-        matriz = self.leer_matriz()
+        if self.modo_entrada == "ecuacion":
+            matriz = self.leer_ecuaciones()
+        else:
+            matriz = self.leer_matriz()
+            self.nombres_variables = [
+                f"x{indice + 1}"
+                for indice in range(self.numero_variables)
+            ]
 
         if matriz is None:
             return
@@ -1949,6 +2370,40 @@ class ChocoLabApp:
                 "Revisa el procedimiento y la clasificación."
             )
         )
+
+    # =====================================================
+    # VISTA DEL PROCEDIMIENTO
+    # =====================================================
+
+    def actualizar_vista_procedimiento(self):
+
+        modo = self.modo_vista_procedimiento.get()
+
+        self.boton_vista_procedimiento.config(
+            text=f"Vista: {modo} ▾"
+        )
+
+        # Si ya existe una resolución, refrescar únicamente la vista.
+        # No se vuelve a calcular el sistema.
+        if self.resultado_actual is not None:
+            self.mostrar_resultado(
+                self.resultado_actual
+            )
+
+    def alternar_modo_numeros(self):
+
+        nuevo_modo = (
+            "Fracción"
+            if self.modo_numeros.get() == "Decimal"
+            else "Decimal"
+        )
+        self.modo_numeros.set(nuevo_modo)
+        self.boton_modo_numeros.config(
+            text=f"Números: {nuevo_modo}"
+        )
+
+        if self.resultado_actual is not None:
+            self.mostrar_resultado(self.resultado_actual)
 
     # =====================================================
     # RESULTADOS
@@ -2006,7 +2461,11 @@ class ChocoLabApp:
         if float(numero).is_integer():
             return str(int(numero))
 
-        return f"{numero:.6g}"
+        if self.modo_numeros.get() == "Fracción":
+            return str(Fraction(float(numero)).limit_denominator(10000))
+
+        texto = f"{numero:.3f}"
+        return texto.rstrip("0").rstrip(".")
 
     def formatear_matriz(self, matriz):
 
@@ -2040,6 +2499,8 @@ class ChocoLabApp:
 
         self.limpiar_salida()
 
+        modo_vista = self.modo_vista_procedimiento.get()
+
         self.escribir_salida(
             "MATRIZ AUMENTADA INICIAL\n",
             "titulo"
@@ -2054,38 +2515,90 @@ class ChocoLabApp:
 
         pasos = resultado["pasos"]
 
-        if len(pasos) == 0:
+        if modo_vista == "Dos fases":
+            fases_visibles = (
+                "escalonamiento",
+                "reduccion"
+            )
+        elif modo_vista == "Gauss":
+            fases_visibles = (
+                "escalonamiento",
+            )
+        elif modo_vista == "Gauss-Jordan":
+            fases_visibles = (
+                "escalonamiento",
+                "reduccion",
+            )
 
-            self.escribir_salida(
-                (
+        pasos_visibles = []
+
+        for paso in pasos:
+
+            if paso["fase"] in fases_visibles:
+                pasos_visibles.append(paso)
+
+        if len(pasos_visibles) == 0:
+
+            if modo_vista == "Gauss":
+                mensaje_fase = (
+                    "La fase Gauss no requirió operaciones por filas.\n\n"
+                )
+            elif modo_vista == "Gauss-Jordan":
+
+                if resultado["clasificacion"] == "inconsistente":
+                    mensaje_fase = (
+                        "Gauss-Jordan no se ejecutó porque durante Gauss "
+                        "se detectó que el sistema es inconsistente.\n\n"
+                    )
+                else:
+                    mensaje_fase = (
+                        "La fase Gauss-Jordan no requirió operaciones "
+                        "adicionales.\n\n"
+                    )
+            else:
+                mensaje_fase = (
                     "La matriz ya estaba suficientemente reducida; "
                     "no fue necesario realizar operaciones por filas.\n\n"
                 )
+
+            self.escribir_salida(
+                mensaje_fase
             )
 
         else:
 
             fase_actual = None
-
             numero_paso = 1
+            encabezado_jordan_mostrado = False
 
-            for paso in pasos:
+            for paso in pasos_visibles:
 
                 if paso["fase"] != fase_actual:
 
                     fase_actual = paso["fase"]
 
-                    if fase_actual == "escalonamiento":
+                    if modo_vista == "Gauss-Jordan":
+                        titulo_fase = "GAUSS-JORDAN DESDE LA MATRIZ INICIAL\n"
+                        if encabezado_jordan_mostrado:
+                            titulo_fase = None
+                        encabezado_jordan_mostrado = True
+                    elif fase_actual == "escalonamiento":
 
-                        self.escribir_salida(
-                            "FASE 1 - FORMA ESCALONADA\n",
-                            "titulo"
-                        )
+                        if modo_vista == "Dos fases":
+                            titulo_fase = "FASE 1 - GAUSS\n"
+                        else:
+                            titulo_fase = "GAUSS\n"
 
                     else:
 
+                        if modo_vista == "Dos fases":
+                            titulo_fase = "FASE 2 - GAUSS-JORDAN\n"
+                        else:
+                            titulo_fase = "GAUSS-JORDAN\n"
+
+                    if titulo_fase is not None:
                         self.escribir_salida(
-                            "FASE 2 - FORMA ESCALONADA REDUCIDA\n",
+                            titulo_fase,
                             "titulo"
                         )
 
@@ -2105,19 +2618,34 @@ class ChocoLabApp:
 
                 numero_paso += 1
 
-        self.escribir_salida(
-            "\nMATRIZ ESCALONADA\n",
-            "titulo"
-        )
+        # -------------------------------------------------
+        # MATRICES RESULTANTES SEGÚN LA VISTA ELEGIDA
+        # -------------------------------------------------
 
-        self.escribir_salida(
-            self.formatear_matriz(
-                resultado["matriz_escalonada"]
+        if modo_vista in (
+            "Dos fases",
+            "Gauss"
+        ):
+
+            self.escribir_salida(
+                "\nMATRIZ GAUSS\n",
+                "titulo"
             )
-            + "\n\n"
-        )
+
+            self.escribir_salida(
+                self.formatear_matriz(
+                    resultado["matriz_escalonada"]
+                )
+                + "\n\n"
+            )
 
         clasificacion = resultado["clasificacion"]
+
+        if (
+            clasificacion == "unica"
+            and modo_vista in ("Dos fases", "Gauss")
+        ):
+            self.mostrar_sustitucion_regresiva(resultado)
 
         if clasificacion == "inconsistente":
 
@@ -2127,17 +2655,22 @@ class ChocoLabApp:
 
             return
 
-        self.escribir_salida(
-            "MATRIZ ESCALONADA REDUCIDA\n",
-            "titulo"
-        )
+        if modo_vista in (
+            "Dos fases",
+            "Gauss-Jordan"
+        ):
 
-        self.escribir_salida(
-            self.formatear_matriz(
-                resultado["matriz_reducida"]
+            self.escribir_salida(
+                "MATRIZ GAUSS-JORDAN\n",
+                "titulo"
             )
-            + "\n\n"
-        )
+
+            self.escribir_salida(
+                self.formatear_matriz(
+                    resultado["matriz_reducida"]
+                )
+                + "\n\n"
+            )
 
         if clasificacion == "unica":
 
@@ -2180,6 +2713,75 @@ class ChocoLabApp:
             )
         )
 
+    def mostrar_sustitucion_regresiva(self, resultado):
+
+        self.escribir_salida(
+            "SUSTITUCIÓN REGRESIVA (DESARROLLO ALGEBRAICO)\n",
+            "titulo"
+        )
+
+        matriz = resultado["matriz_escalonada"]
+        solucion = resultado["solucion"]
+
+        for fila, columna_pivote in reversed(resultado["pivotes"]):
+            nombre = self.nombres_variables[columna_pivote]
+            termino_independiente = matriz[fila][self.numero_variables]
+            ecuacion_simbolica = nombre
+            ecuacion_sustituida = nombre
+            hay_terminos = False
+            suma_conocida = 0.0
+
+            for columna in range(columna_pivote + 1, self.numero_variables):
+                coeficiente = matriz[fila][columna]
+                if abs(coeficiente) < TOLERANCIA:
+                    continue
+
+                valor = solucion[columna]
+                suma_conocida += coeficiente * valor
+                signo = " + " if coeficiente > 0 else " - "
+                magnitud = abs(coeficiente)
+                texto_coeficiente = ""
+                if abs(magnitud - 1.0) >= TOLERANCIA:
+                    texto_coeficiente = self.formatear_numero(magnitud)
+
+                ecuacion_simbolica += (
+                    signo
+                    + texto_coeficiente
+                    + self.nombres_variables[columna]
+                )
+                ecuacion_sustituida += (
+                    signo
+                    + (
+                        f"({self.formatear_numero(magnitud)})"
+                        if texto_coeficiente
+                        else ""
+                    )
+                    + f"({self.formatear_numero(valor)})"
+                )
+                hay_terminos = True
+
+            if not hay_terminos:
+                self.escribir_salida(
+                    f"{nombre} = {self.formatear_numero(termino_independiente)}\n\n"
+                )
+                continue
+
+            self.escribir_salida(
+                f"{ecuacion_simbolica} = "
+                f"{self.formatear_numero(termino_independiente)}\n"
+            )
+            self.escribir_salida(
+                f"{ecuacion_sustituida} = "
+                f"{self.formatear_numero(termino_independiente)}\n"
+            )
+            self.escribir_salida(
+                f"{nombre} = {self.formatear_numero(termino_independiente)} "
+                f"- ({self.formatear_numero(suma_conocida)})\n"
+            )
+            self.escribir_salida(
+                f"{nombre} = {self.formatear_numero(solucion[columna_pivote])}\n\n"
+            )
+
     def mostrar_resultado_unico(self, resultado):
 
         self.escribir_salida(
@@ -2202,7 +2804,7 @@ class ChocoLabApp:
 
             self.escribir_salida(
                 (
-                    f"x{indice + 1} = "
+                    f"{self.nombres_variables[indice]} = "
                     f"{self.formatear_numero(valor)}\n"
                 )
             )
@@ -2278,7 +2880,7 @@ class ChocoLabApp:
         for columna in libres:
 
             nombres_libres.append(
-                f"x{columna + 1}"
+                self.nombres_variables[columna]
             )
 
         self.escribir_salida(
@@ -2340,7 +2942,7 @@ class ChocoLabApp:
 
             lineas.append(
                 (
-                    f"x{columna + 1} = "
+                    f"{self.nombres_variables[columna]} = "
                     f"{parametro_por_columna[columna]}"
                 )
             )
@@ -2419,7 +3021,7 @@ class ChocoLabApp:
 
             lineas.append(
                 (
-                    f"x{columna_pivote + 1} = "
+                    f"{self.nombres_variables[columna_pivote]} = "
                     + " ".join(partes)
                 )
             )
@@ -2429,9 +3031,7 @@ class ChocoLabApp:
 
             parte = linea.split("=")[0].strip()
 
-            return int(
-                parte.replace("x", "")
-            )
+            return self.nombres_variables.index(parte)
 
         lineas.sort(
             key=numero_variable
@@ -2442,6 +3042,48 @@ class ChocoLabApp:
     # =====================================================
     # EJEMPLOS PARA LOS TRES CASOS DE PRUEBA
     # =====================================================
+
+    def formatear_ecuacion_desde_fila(self, fila_matriz):
+
+        partes = []
+
+        for columna in range(self.numero_variables):
+
+            coeficiente = fila_matriz[columna]
+
+            if abs(coeficiente) < TOLERANCIA:
+                continue
+
+            magnitud = abs(coeficiente)
+            variable = f"x{columna + 1}"
+
+            if abs(magnitud - 1.0) < TOLERANCIA:
+                termino = variable
+            else:
+                termino = (
+                    f"{self.formatear_numero(magnitud)}"
+                    f"{variable}"
+                )
+
+            if len(partes) == 0:
+                if coeficiente < 0:
+                    partes.append("-" + termino)
+                else:
+                    partes.append(termino)
+            else:
+                if coeficiente < 0:
+                    partes.append("- " + termino)
+                else:
+                    partes.append("+ " + termino)
+
+        if len(partes) == 0:
+            partes.append("0")
+
+        return (
+            " ".join(partes)
+            + " = "
+            + self.formatear_numero(fila_matriz[-1])
+        )
 
     def cargar_ejemplo(self):
 
@@ -2469,6 +3111,7 @@ class ChocoLabApp:
 
         self.numero_ecuaciones = 3
         self.numero_variables = 3
+        self.nombres_variables = ["x1", "x2", "x3"]
 
         self.variable_ecuaciones.set(
             "3"
@@ -2478,22 +3121,34 @@ class ChocoLabApp:
             "3"
         )
 
-        self.crear_matriz_interfaz()
+        self.crear_entrada_actual()
 
-        for fila in range(3):
+        if self.modo_entrada == "ecuacion":
 
-            for columna in range(4):
-
-                self.entradas_matriz[
-                    fila
-                ][
-                    columna
-                ].insert(
+            for fila in range(3):
+                self.entradas_ecuaciones[fila].insert(
                     0,
-                    self.formatear_numero(
-                        matriz[fila][columna]
+                    self.formatear_ecuacion_desde_fila(
+                        matriz[fila]
                     )
                 )
+
+        else:
+
+            for fila in range(3):
+
+                for columna in range(4):
+
+                    self.entradas_matriz[
+                        fila
+                    ][
+                        columna
+                    ].insert(
+                        0,
+                        self.formatear_numero(
+                            matriz[fila][columna]
+                        )
+                    )
 
         self.mostrar_mensaje(
             (
@@ -2508,24 +3163,32 @@ class ChocoLabApp:
 
     def limpiar_matriz(self):
 
-        for fila in range(self.numero_ecuaciones):
+        if self.modo_entrada == "ecuacion":
 
-            for columna in range(self.numero_variables + 1):
+            for entrada in self.entradas_ecuaciones:
+                entrada.delete(0, tk.END)
+                entrada.config(bg=COLOR_BLANCO)
 
-                entrada = self.entradas_matriz[
-                    fila
-                ][
-                    columna
-                ]
+        else:
 
-                entrada.delete(
-                    0,
-                    tk.END
-                )
+            for fila in range(self.numero_ecuaciones):
 
-                entrada.config(
-                    bg=self.color_normal_celda(columna)
-                )
+                for columna in range(self.numero_variables + 1):
+
+                    entrada = self.entradas_matriz[
+                        fila
+                    ][
+                        columna
+                    ]
+
+                    entrada.delete(
+                        0,
+                        tk.END
+                    )
+
+                    entrada.config(
+                        bg=self.color_normal_celda(columna)
+                    )
 
         self.matriz_original = None
         self.resultado_actual = None
@@ -2534,25 +3197,34 @@ class ChocoLabApp:
 
         self.escribir_salida(
             (
-                "Matriz limpia.\n"
+                "Datos limpiados.\n"
                 "Ingresa un nuevo sistema y presiona "
                 "«Resolver sistema».\n"
             )
         )
 
-        self.texto_celda.set(
-            (
-                "Selecciona una celda para ver su coordenada, "
-                "función y si pertenece a la diagonal."
+        if self.modo_entrada == "ecuacion":
+            self.texto_celda.set(
+                (
+                    "Selecciona una ecuación para escribirla. "
+                    "Ejemplos: x + 2y + 3z = 9, f = 7 o 67g12 - 2h = 10"
+                )
             )
-        )
+        else:
+            self.texto_celda.set(
+                (
+                    "Selecciona una celda para ver su coordenada, "
+                    "función y si pertenece a la diagonal."
+                )
+            )
 
         self.mostrar_mensaje(
-            "Choco dice: matriz limpia."
+            "Choco dice: datos limpiados."
         )
 
-        if self.entradas_matriz:
-
+        if self.modo_entrada == "ecuacion" and self.entradas_ecuaciones:
+            self.entradas_ecuaciones[0].focus_set()
+        elif self.entradas_matriz:
             self.entradas_matriz[0][0].focus_set()
 
     # =====================================================
