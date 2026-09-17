@@ -7,7 +7,7 @@
 # Julio Javier Sevilla Gallegos
 # Docente: Carlos Iván Argüello Martínez
 # =========================================================
-# LÓGICA DEL PROGRAMA
+# LÓGICA DEL PROGRAMA (versión integrada)
 # Calculadora de Álgebra Lineal - Choco Lab
 # =========================================================
 #
