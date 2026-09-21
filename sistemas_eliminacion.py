@@ -14,6 +14,7 @@
 # Este archivo contiene únicamente la lógica matemática.
 # =========================================================
 import re
+from fractions import Fraction
 
 
 TOLERANCIA = 1e-10
@@ -467,13 +468,23 @@ def _limpiar_ceros(matriz, tolerancia=TOLERANCIA):
 
 
 def _numero_corto(numero):
-    """Formato corto para describir operaciones por filas."""
+    """Formato corto y legible para describir operaciones por filas.
+
+    Si un decimal representa con suficiente precisión una fracción sencilla,
+    se muestra esa fracción. Esto evita descripciones como 1/2.66667 cuando
+    algebraicamente el factor correcto puede escribirse como 3/8.
+    """
 
     if abs(numero) < TOLERANCIA:
-        numero = 0.0
+        return "0"
 
-    if float(numero).is_integer():
-        return str(int(numero))
+    candidato = Fraction(float(numero)).limit_denominator(10000)
+    tolerancia_fraccion = 1e-9 * max(1.0, abs(float(numero)))
+
+    if abs(float(candidato) - float(numero)) <= tolerancia_fraccion:
+        if candidato.denominator == 1:
+            return str(candidato.numerator)
+        return f"{candidato.numerator}/{candidato.denominator}"
 
     return f"{numero:.6g}"
 
@@ -659,7 +670,7 @@ def resolver_sistema(matriz_aumentada, numero_variables, tolerancia=TOLERANCIA):
                 "escalonamiento",
                 (
                     f"F{fila_pivote + 1} → "
-                    f"(1/{_numero_corto(pivote)})F{fila_pivote + 1}"
+                    f"({_numero_corto(1.0 / pivote)})F{fila_pivote + 1}"
                 ),
                 matriz
             )

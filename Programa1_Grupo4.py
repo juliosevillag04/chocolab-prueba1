@@ -791,568 +791,6 @@ class ConversionSistemasNumericosApp:
 # MÓDULO 3: ÁLGEBRA MATRICIAL Y VECTORIAL
 # =========================================================
 
-class _AlgebraMatricialVectorialAppAnterior:
-
-    OPERACIONES = (
-        "A + B",
-        "A − B",
-        "A × B",
-        "Transpuesta de A",
-        "Determinante de A",
-        "k · A",
-        "A · x (B como vector)"
-    )
-
-    def __init__(self, ventana):
-        self.ventana = ventana
-        self.imagenes = []
-
-        self.ventana.title("Choco Lab - Álgebra matricial y vectorial")
-        self.ventana.geometry("1180x760")
-        self.ventana.minsize(930, 640)
-        self.ventana.configure(bg=COLOR_FONDO)
-
-        configurar_estilos()
-        self._crear_interfaz()
-
-    def _crear_interfaz(self):
-        self.ventana.rowconfigure(1, weight=1)
-        self.ventana.columnconfigure(0, weight=1)
-
-        encabezado = tk.Frame(self.ventana, bg=COLOR_FONDO)
-        encabezado.grid(row=0, column=0, sticky="ew", padx=24, pady=(12, 4))
-        encabezado.columnconfigure(1, weight=1)
-
-        logo = cargar_logo(self.imagenes, "chocolab.png", 125)
-        if logo is not None:
-            tk.Label(
-                encabezado,
-                image=logo,
-                bg=COLOR_FONDO
-            ).grid(row=0, column=0, rowspan=2, sticky="w", padx=(0, 18))
-
-        tk.Label(
-            encabezado,
-            text="Álgebra matricial y vectorial",
-            font=("Arial", 20, "bold"),
-            fg=COLOR_CHOCOLATE,
-            bg=COLOR_FONDO
-        ).grid(row=0, column=1, sticky="w")
-
-        tk.Label(
-            encabezado,
-            text=(
-                "Opera matrices y observa Ax como producto, combinación "
-                "lineal y producto fila-vector."
-            ),
-            font=("Arial", 10),
-            fg=COLOR_CHOCOLATE_MEDIO,
-            bg=COLOR_FONDO
-        ).grid(row=1, column=1, sticky="w", pady=(4, 0))
-
-        cuaderno = ttk.Notebook(self.ventana)
-        cuaderno.grid(row=1, column=0, sticky="nsew", padx=24, pady=8)
-
-        pestana_operaciones = tk.Frame(cuaderno, bg=COLOR_FONDO)
-        pestana_ecuacion = tk.Frame(cuaderno, bg=COLOR_FONDO)
-
-        cuaderno.add(pestana_operaciones, text="Operaciones con matrices")
-        cuaderno.add(pestana_ecuacion, text="Ecuación matricial y vectorial")
-
-        self._crear_pestana_operaciones(pestana_operaciones)
-        self._crear_pestana_ecuacion(pestana_ecuacion)
-
-        pie = tk.Frame(self.ventana, bg=COLOR_CHOCOLATE)
-        pie.grid(row=2, column=0, sticky="ew")
-        pie.columnconfigure(0, weight=1)
-
-        tk.Label(
-            pie,
-            text=(
-                "Choco dice: separa columnas con espacios o comas y "
-                "usa una línea por cada fila."
-            ),
-            font=("Arial", 9, "italic"),
-            fg=COLOR_BLANCO,
-            bg=COLOR_CHOCOLATE
-        ).grid(row=0, column=0, sticky="w", padx=18, pady=10)
-
-        tk.Button(
-            pie,
-            text="Volver al menú",
-            command=lambda: self.ventana.event_generate("<<CerrarModulo>>"),
-            bg=COLOR_RESALTADO,
-            fg=COLOR_CHOCOLATE,
-            relief="flat",
-            padx=12,
-            pady=5
-        ).grid(row=0, column=1, sticky="e", padx=18, pady=6)
-
-    def _crear_editor(self, padre, titulo, columna, ejemplo):
-        marco = ttk.LabelFrame(padre, text=titulo)
-        marco.grid(
-            row=0,
-            column=columna,
-            sticky="nsew",
-            padx=(0 if columna == 0 else 6, 6 if columna == 0 else 0),
-            pady=5
-        )
-        marco.rowconfigure(0, weight=1)
-        marco.columnconfigure(0, weight=1)
-
-        editor = tk.Text(
-            marco,
-            height=9,
-            width=28,
-            font=("Consolas", 11),
-            bg=COLOR_BLANCO,
-            fg=COLOR_CHOCOLATE,
-            relief="solid",
-            bd=1,
-            padx=10,
-            pady=8,
-            undo=True
-        )
-        editor.grid(row=0, column=0, sticky="nsew", padx=8, pady=8)
-        editor.insert("1.0", ejemplo)
-        return editor
-
-    def _crear_salida(self, padre, fila):
-        marco = ttk.LabelFrame(padre, text="Resultado y procedimiento")
-        marco.grid(row=fila, column=0, columnspan=2, sticky="nsew", pady=(6, 0))
-        marco.rowconfigure(0, weight=1)
-        marco.columnconfigure(0, weight=1)
-
-        salida = tk.Text(
-            marco,
-            wrap="none",
-            font=("Consolas", 10),
-            bg=COLOR_BLANCO,
-            fg=COLOR_CHOCOLATE,
-            relief="solid",
-            bd=1,
-            padx=12,
-            pady=10,
-            state="disabled"
-        )
-        salida.grid(row=0, column=0, sticky="nsew", padx=(8, 0), pady=(8, 0))
-
-        barra_y = ttk.Scrollbar(marco, orient="vertical", command=salida.yview)
-        barra_y.grid(row=0, column=1, sticky="ns", pady=(8, 0), padx=(0, 8))
-
-        barra_x = ttk.Scrollbar(marco, orient="horizontal", command=salida.xview)
-        barra_x.grid(row=1, column=0, sticky="ew", padx=(8, 0), pady=(0, 8))
-
-        salida.configure(
-            yscrollcommand=barra_y.set,
-            xscrollcommand=barra_x.set
-        )
-        return salida
-
-    def _crear_pestana_operaciones(self, pestana):
-        pestana.rowconfigure(2, weight=1)
-        pestana.columnconfigure(0, weight=1)
-        pestana.columnconfigure(1, weight=1)
-
-        self.editor_a = self._crear_editor(
-            pestana,
-            "Matriz A",
-            0,
-            "1  2\n3  4"
-        )
-        self.editor_b = self._crear_editor(
-            pestana,
-            "Matriz B o vector x",
-            1,
-            "5  6\n7  8"
-        )
-
-        controles = tk.Frame(pestana, bg=COLOR_FONDO)
-        controles.grid(row=1, column=0, columnspan=2, sticky="ew", pady=5)
-        controles.columnconfigure(1, weight=1)
-
-        tk.Label(
-            controles,
-            text="Operación:",
-            bg=COLOR_FONDO,
-            fg=COLOR_CHOCOLATE
-        ).grid(row=0, column=0, padx=(2, 7), pady=5)
-
-        self.operacion = tk.StringVar(value=self.OPERACIONES[0])
-        ttk.Combobox(
-            controles,
-            textvariable=self.operacion,
-            values=self.OPERACIONES,
-            state="readonly",
-            width=31
-        ).grid(row=0, column=1, sticky="w", padx=7, pady=5)
-
-        tk.Label(
-            controles,
-            text="Escalar k:",
-            bg=COLOR_FONDO,
-            fg=COLOR_CHOCOLATE
-        ).grid(row=0, column=2, padx=(18, 6), pady=5)
-
-        self.escalar = tk.StringVar(value="2")
-        tk.Entry(
-            controles,
-            textvariable=self.escalar,
-            width=10,
-            font=("Consolas", 10),
-            relief="solid",
-            bd=1
-        ).grid(row=0, column=3, padx=6, pady=5, ipady=3)
-
-        tk.Button(
-            controles,
-            text="Calcular",
-            command=self.calcular_operacion,
-            bg=COLOR_CHOCOLATE,
-            fg=COLOR_BLANCO,
-            activebackground=COLOR_CHOCOLATE_MEDIO,
-            activeforeground=COLOR_BLANCO,
-            relief="flat",
-            font=("Arial", 10, "bold"),
-            padx=18,
-            pady=6
-        ).grid(row=0, column=4, padx=(14, 6), pady=5)
-
-        tk.Button(
-            controles,
-            text="Limpiar",
-            command=self.limpiar_operaciones,
-            bg=COLOR_BEIGE,
-            fg=COLOR_CHOCOLATE,
-            relief="flat",
-            padx=14,
-            pady=6
-        ).grid(row=0, column=5, padx=6, pady=5)
-
-        self.salida_operaciones = self._crear_salida(pestana, 2)
-        self._poner_texto(
-            self.salida_operaciones,
-            "Selecciona una operación y presiona «Calcular»."
-        )
-
-    def _crear_pestana_ecuacion(self, pestana):
-        pestana.rowconfigure(2, weight=1)
-        pestana.columnconfigure(0, weight=1)
-        pestana.columnconfigure(1, weight=1)
-
-        self.editor_coeficientes = self._crear_editor(
-            pestana,
-            "Matriz de coeficientes A",
-            0,
-            "1  2  3\n0  1  4\n2  0  1"
-        )
-
-        marco_vector = ttk.LabelFrame(pestana, text="Vector x")
-        marco_vector.grid(row=0, column=1, sticky="nsew", padx=(6, 0), pady=5)
-        marco_vector.rowconfigure(0, weight=1)
-        marco_vector.columnconfigure(0, weight=1)
-
-        self.editor_vector = tk.Text(
-            marco_vector,
-            height=9,
-            width=28,
-            font=("Consolas", 11),
-            bg=COLOR_BLANCO,
-            fg=COLOR_CHOCOLATE,
-            relief="solid",
-            bd=1,
-            padx=10,
-            pady=8,
-            undo=True
-        )
-        self.editor_vector.grid(row=0, column=0, sticky="nsew", padx=8, pady=8)
-        self.editor_vector.insert("1.0", "2\n-1\n3")
-
-        controles = tk.Frame(pestana, bg=COLOR_FONDO)
-        controles.grid(row=1, column=0, columnspan=2, sticky="ew", pady=5)
-        controles.columnconfigure(0, weight=1)
-
-        tk.Label(
-            controles,
-            text=(
-                "Se mostrará Ax en sus tres representaciones equivalentes."
-            ),
-            font=("Arial", 9, "italic"),
-            bg=COLOR_FONDO,
-            fg=COLOR_CHOCOLATE_MEDIO
-        ).grid(row=0, column=0, sticky="w", padx=2)
-
-        tk.Button(
-            controles,
-            text="Calcular Ax",
-            command=self.calcular_ax,
-            bg=COLOR_CHOCOLATE,
-            fg=COLOR_BLANCO,
-            activebackground=COLOR_CHOCOLATE_MEDIO,
-            activeforeground=COLOR_BLANCO,
-            relief="flat",
-            font=("Arial", 10, "bold"),
-            padx=18,
-            pady=6
-        ).grid(row=0, column=1, padx=6)
-
-        tk.Button(
-            controles,
-            text="Limpiar",
-            command=self.limpiar_ax,
-            bg=COLOR_BEIGE,
-            fg=COLOR_CHOCOLATE,
-            relief="flat",
-            padx=14,
-            pady=6
-        ).grid(row=0, column=2, padx=6)
-
-        self.salida_ax = self._crear_salida(pestana, 2)
-        self._poner_texto(
-            self.salida_ax,
-            "Ingresa A y x para obtener el producto Ax."
-        )
-
-    def _poner_texto(self, widget, texto):
-        widget.configure(state="normal")
-        widget.delete("1.0", "end")
-        widget.insert("1.0", texto)
-        widget.configure(state="disabled")
-
-    def calcular_operacion(self):
-        operacion = self.operacion.get()
-
-        try:
-            a = _leer_matriz(self.editor_a.get("1.0", "end"), "matriz A")
-            filas_a, columnas_a = _dimensiones(a)
-            lineas = [
-                f"Dimensión de A: {filas_a}×{columnas_a}",
-                "",
-                "A =",
-                _texto_matriz(a),
-                ""
-            ]
-
-            if operacion == "A + B":
-                b = _leer_matriz(self.editor_b.get("1.0", "end"), "matriz B")
-                resultado = _sumar_matrices(a, b)
-                lineas.extend([
-                    "B =",
-                    _texto_matriz(b),
-                    "",
-                    "Se suman los elementos que ocupan la misma posición.",
-                    "",
-                    "A + B =",
-                    _texto_matriz(resultado)
-                ])
-
-            elif operacion == "A − B":
-                b = _leer_matriz(self.editor_b.get("1.0", "end"), "matriz B")
-                resultado = _sumar_matrices(a, b, signo=-1)
-                lineas.extend([
-                    "B =",
-                    _texto_matriz(b),
-                    "",
-                    "Se restan los elementos que ocupan la misma posición.",
-                    "",
-                    "A − B =",
-                    _texto_matriz(resultado)
-                ])
-
-            elif operacion == "A × B":
-                b = _leer_matriz(self.editor_b.get("1.0", "end"), "matriz B")
-                resultado = _multiplicar_matrices(a, b)
-                lineas.extend([
-                    f"Dimensión de B: {len(b)}×{len(b[0])}",
-                    "B =",
-                    _texto_matriz(b),
-                    "",
-                    "Cada entrada se obtiene con fila de A por columna de B.",
-                    "",
-                    "A × B =",
-                    _texto_matriz(resultado)
-                ])
-
-            elif operacion == "Transpuesta de A":
-                resultado = _transponer(a)
-                lineas.extend([
-                    "Las filas de A pasan a ser las columnas de Aᵀ.",
-                    "",
-                    "Aᵀ =",
-                    _texto_matriz(resultado)
-                ])
-
-            elif operacion == "Determinante de A":
-                determinante, pasos = _determinante_con_pasos(a)
-                lineas.extend([
-                    "Se triangulariza A sin multiplicar filas por escalares.",
-                    "",
-                    *[f"• {paso}" for paso in pasos],
-                    "",
-                    f"det(A) = {_texto_numero(determinante)}"
-                ])
-
-            elif operacion == "k · A":
-                k = _leer_numero(self.escalar.get())
-                resultado = [[k * valor for valor in fila] for fila in a]
-                lineas.extend([
-                    f"k = {_texto_numero(k)}",
-                    "Cada elemento de A se multiplica por k.",
-                    "",
-                    "k · A =",
-                    _texto_matriz(resultado)
-                ])
-
-            elif operacion == "A · x (B como vector)":
-                x = _leer_vector(
-                    self.editor_b.get("1.0", "end"),
-                    "vector x"
-                )
-
-                if columnas_a != len(x):
-                    raise ValueError(
-                        f"A tiene {columnas_a} columnas, pero x tiene "
-                        f"{len(x)} componentes."
-                    )
-
-                resultado = _multiplicar_matrices(
-                    a,
-                    [[valor] for valor in x]
-                )
-                lineas.extend([
-                    "x =",
-                    _texto_matriz([[valor] for valor in x]),
-                    "",
-                    "Cada componente de Ax es el producto punto "
-                    "de una fila de A con x.",
-                    "",
-                    "Ax =",
-                    _texto_matriz(resultado)
-                ])
-
-            else:
-                raise ValueError("Selecciona una operación válida.")
-
-        except ValueError as error:
-            messagebox.showerror(
-                "No se puede calcular",
-                f"Choco dice: {error}",
-                parent=self.ventana
-            )
-            return
-
-        self._poner_texto(self.salida_operaciones, "\n".join(lineas))
-
-    def calcular_ax(self):
-        try:
-            a = _leer_matriz(
-                self.editor_coeficientes.get("1.0", "end"),
-                "matriz A"
-            )
-            x = _leer_vector(
-                self.editor_vector.get("1.0", "end"),
-                "vector x"
-            )
-
-            filas, columnas = _dimensiones(a)
-
-            if columnas != len(x):
-                raise ValueError(
-                    f"A tiene {columnas} columnas, pero x tiene "
-                    f"{len(x)} componentes. Para calcular Ax deben coincidir."
-                )
-
-            b_matriz = _multiplicar_matrices(a, [[valor] for valor in x])
-            b = [fila[0] for fila in b_matriz]
-
-            columnas_a = [
-                [a[fila][columna] for fila in range(filas)]
-                for columna in range(columnas)
-            ]
-
-            combinacion = " + ".join(
-                f"({_texto_numero(x[indice])})a{indice + 1}"
-                for indice in range(columnas)
-            )
-
-            lineas = [
-                "1. ECUACIÓN MATRICIAL",
-                "=" * 58,
-                "A =",
-                _texto_matriz(a),
-                "",
-                "x =",
-                _texto_matriz([[valor] for valor in x]),
-                "",
-                "Ax = b =",
-                _texto_matriz(b_matriz),
-                "",
-                "2. ECUACIÓN VECTORIAL / COMBINACIÓN LINEAL",
-                "=" * 58,
-                f"{combinacion} = b",
-                ""
-            ]
-
-            for indice, columna in enumerate(columnas_a, start=1):
-                lineas.append(
-                    f"a{indice} = "
-                    f"({', '.join(_texto_numero(v) for v in columna)})"
-                )
-
-            lineas.extend([
-                "",
-                "Resultado de la combinación = "
-                f"({', '.join(_texto_numero(v) for v in b)})",
-                "",
-                "3. REPRESENTACIÓN FILA-VECTOR",
-                "=" * 58
-            ])
-
-            for indice, fila in enumerate(a):
-                productos = " + ".join(
-                    f"({_texto_numero(fila[j])})({_texto_numero(x[j])})"
-                    for j in range(columnas)
-                )
-                lineas.append(
-                    f"Fila {indice + 1} · x: {productos} "
-                    f"= {_texto_numero(b[indice])}"
-                )
-
-            lineas.extend([
-                "",
-                "Las tres representaciones producen exactamente el mismo vector b."
-            ])
-
-        except ValueError as error:
-            messagebox.showerror(
-                "No se puede calcular Ax",
-                f"Choco dice: {error}",
-                parent=self.ventana
-            )
-            return
-
-        self._poner_texto(self.salida_ax, "\n".join(lineas))
-
-    def limpiar_operaciones(self):
-        self.editor_a.delete("1.0", "end")
-        self.editor_b.delete("1.0", "end")
-        self._poner_texto(
-            self.salida_operaciones,
-            "Selecciona una operación y presiona «Calcular»."
-        )
-
-    def limpiar_ax(self):
-        self.editor_coeficientes.delete("1.0", "end")
-        self.editor_vector.delete("1.0", "end")
-        self._poner_texto(
-            self.salida_ax,
-            "Ingresa A y x para obtener el producto Ax."
-        )
-
-
-# =========================================================
-# MÓDULO 3 REVISADO: ESPACIO DE TRABAJO MATRICIAL/VECTORIAL
-# =========================================================
 
 class AlgebraMatricialVectorialApp:
     """Calculadora libre de matrices, vectores y expresiones algebraicas."""
@@ -1377,6 +815,15 @@ class AlgebraMatricialVectorialApp:
         self.formato_salida = tk.StringVar(value="Completa")
         self.nombre_matriz_resolver = tk.StringVar(value="A")
         self.nombre_vector_objetivo = tk.StringVar(value="b")
+
+        # Estado independiente para el asistente de combinación lineal.
+        # Se separa del selector de Ax=b para que el usuario pueda trabajar
+        # con ambas tareas sin que una cambie los datos de la otra.
+        self.nombre_objetivo_combinacion = tk.StringVar(value="b")
+        self.seleccion_vectores_combinacion = {}
+        self.texto_previsualizacion_combinacion = tk.StringVar(
+            value="Selecciona un vector objetivo y luego los vectores generadores."
+        )
 
         self.ventana.title("Choco Lab - Ecuaciones matriciales y vectoriales")
         self.ventana.geometry("1280x800")
@@ -1420,8 +867,8 @@ class AlgebraMatricialVectorialApp:
         tk.Label(
             encabezado,
             text=(
-                "Crea datos por celdas o ecuaciones y escribe expresiones "
-                "como A(u+v), Au+Av, Ax=b, AB o 3A."
+                "Crea matrices o vectores, resuelve Ax=b y comprueba combinaciones "
+                "lineales con un asistente guiado."
             ),
             font=("Arial", 10),
             fg=COLOR_CHOCOLATE_MEDIO,
@@ -1482,7 +929,7 @@ class AlgebraMatricialVectorialApp:
         try:
             alto = self.divisor.winfo_height()
             if alto > 300:
-                self.divisor.sash_place(0, 0, int(alto * 0.63))
+                self.divisor.sash_place(0, 0, int(alto * 0.70))
         except tk.TclError:
             pass
 
@@ -1705,13 +1152,19 @@ class AlgebraMatricialVectorialApp:
         # accesibles sin reducir el espacio para ingresar los datos.
         self.cuaderno_operacion = ttk.Notebook(panel)
         self.cuaderno_operacion.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+
         expresiones = tk.Frame(self.cuaderno_operacion, bg=COLOR_FONDO)
         self.pestana_resolver = tk.Frame(self.cuaderno_operacion, bg=COLOR_FONDO)
+        self.pestana_combinacion = tk.Frame(self.cuaderno_operacion, bg=COLOR_FONDO)
+
         self.cuaderno_operacion.add(expresiones, text="Operaciones libres")
         self.cuaderno_operacion.add(self.pestana_resolver, text="Resolver Ax=b")
+        self.cuaderno_operacion.add(self.pestana_combinacion, text="Combinación lineal")
+
         expresiones.rowconfigure(0, weight=1)
         expresiones.columnconfigure(0, weight=1)
         self._crear_panel_resolver(self.pestana_resolver)
+        self._crear_panel_combinacion(self.pestana_combinacion)
 
         self.arbol = ttk.Treeview(
             expresiones,
@@ -1832,82 +1285,513 @@ class AlgebraMatricialVectorialApp:
         ).grid(row=5, column=0, sticky="ew", padx=10, pady=(0, 8))
 
     def _crear_panel_resolver(self, panel):
-        """Presenta Ax=b y pertenencia al espacio generado como dos tareas claras."""
+        """Interfaz guiada y sencilla para resolver la ecuación matricial Ax=b."""
 
         panel.columnconfigure(0, weight=1)
-        panel.rowconfigure(1, weight=1)
+        panel.rowconfigure(2, weight=1)
 
-        ecuacion = ttk.LabelFrame(panel, text="Resolver la ecuación matricial Ax = b")
-        ecuacion.grid(row=0, column=0, sticky="ew", padx=10, pady=(9, 6))
+        ayuda = tk.Frame(
+            panel,
+            bg="#FFF9ED",
+            highlightbackground=COLOR_BEIGE,
+            highlightthickness=1
+        )
+        ayuda.grid(row=0, column=0, sticky="ew", padx=10, pady=(10, 6))
+        ayuda.columnconfigure(0, weight=1)
+
+        tk.Label(
+            ayuda,
+            text="Resolver Ax = b",
+            font=("Arial", 11, "bold"),
+            bg="#FFF9ED",
+            fg=COLOR_CHOCOLATE,
+            anchor="w"
+        ).grid(row=0, column=0, sticky="ew", padx=10, pady=(8, 2))
+
+        tk.Label(
+            ayuda,
+            text=(
+                "1) Elige la matriz A.  2) Elige el vector b.  "
+                "3) Choco encuentra las componentes de x reutilizando Gauss/Gauss-Jordan."
+            ),
+            font=("Arial", 9),
+            bg="#FFF9ED",
+            fg=COLOR_CHOCOLATE_MEDIO,
+            justify="left",
+            anchor="w",
+            wraplength=470
+        ).grid(row=1, column=0, sticky="ew", padx=10, pady=(0, 8))
+
+        ecuacion = ttk.LabelFrame(panel, text="Datos de la ecuación matricial")
+        ecuacion.grid(row=1, column=0, sticky="ew", padx=10, pady=6)
         ecuacion.columnconfigure(1, weight=1)
 
         tk.Label(
-            ecuacion, text="Matriz A:", bg=COLOR_FONDO, fg=COLOR_CHOCOLATE
-        ).grid(row=0, column=0, sticky="w", padx=9, pady=6)
+            ecuacion, text="Matriz A:", bg=COLOR_FONDO, fg=COLOR_CHOCOLATE,
+            font=("Arial", 9, "bold")
+        ).grid(row=0, column=0, sticky="w", padx=9, pady=7)
         self.selector_matriz = ttk.Combobox(
             ecuacion, textvariable=self.nombre_matriz_resolver, state="readonly"
         )
-        self.selector_matriz.grid(row=0, column=1, sticky="ew", padx=8, pady=6)
+        self.selector_matriz.grid(row=0, column=1, sticky="ew", padx=8, pady=7)
+        self.selector_matriz.bind(
+            "<<ComboboxSelected>>", lambda event: self._actualizar_previsualizacion_axb()
+        )
 
         tk.Label(
-            ecuacion, text="Vector b:", bg=COLOR_FONDO, fg=COLOR_CHOCOLATE
-        ).grid(row=1, column=0, sticky="w", padx=9, pady=6)
+            ecuacion, text="Vector b:", bg=COLOR_FONDO, fg=COLOR_CHOCOLATE,
+            font=("Arial", 9, "bold")
+        ).grid(row=1, column=0, sticky="w", padx=9, pady=7)
         self.selector_objetivo = ttk.Combobox(
             ecuacion, textvariable=self.nombre_vector_objetivo, state="readonly"
         )
-        self.selector_objetivo.grid(row=1, column=1, sticky="ew", padx=8, pady=6)
+        self.selector_objetivo.grid(row=1, column=1, sticky="ew", padx=8, pady=7)
+        self.selector_objetivo.bind(
+            "<<ComboboxSelected>>", lambda event: self._actualizar_previsualizacion_axb()
+        )
+
+        self.texto_previsualizacion_axb = tk.StringVar(
+            value="Guarda una matriz y un vector compatible para resolver Ax=b."
+        )
+        tk.Label(
+            ecuacion,
+            textvariable=self.texto_previsualizacion_axb,
+            bg=COLOR_FONDO,
+            fg=COLOR_CHOCOLATE_MEDIO,
+            font=("Consolas", 9),
+            justify="left",
+            anchor="w",
+            wraplength=455
+        ).grid(row=2, column=0, columnspan=2, sticky="ew", padx=9, pady=(3, 7))
+
+        acciones = tk.Frame(ecuacion, bg=COLOR_FONDO)
+        acciones.grid(row=3, column=0, columnspan=2, sticky="ew", padx=9, pady=(2, 9))
 
         tk.Button(
-            ecuacion, text="Encontrar x",
+            acciones,
+            text="Resolver y explicar",
             command=self.resolver_axb,
-            bg=COLOR_CHOCOLATE, fg=COLOR_BLANCO,
+            bg=COLOR_CHOCOLATE,
+            fg=COLOR_BLANCO,
             activebackground=COLOR_CHOCOLATE_MEDIO,
             activeforeground=COLOR_BLANCO,
-            relief="flat", font=("Arial", 10, "bold"), padx=14, pady=6
-        ).grid(row=2, column=0, columnspan=2, sticky="w", padx=9, pady=(6, 9))
+            relief="flat",
+            font=("Arial", 10, "bold"),
+            padx=14,
+            pady=7
+        ).pack(side="left")
 
-        combinacion = ttk.LabelFrame(
-            panel, text="¿Se puede escribir b como combinación lineal?"
-        )
-        combinacion.grid(row=1, column=0, sticky="nsew", padx=10, pady=(6, 9))
-        combinacion.columnconfigure(0, weight=1)
-        combinacion.rowconfigure(1, weight=1)
+        tk.Button(
+            acciones,
+            text="Cargar ejemplo Ax=b",
+            command=self.cargar_ejemplo_axb,
+            bg=COLOR_RESALTADO,
+            fg=COLOR_CHOCOLATE,
+            relief="flat",
+            padx=10,
+            pady=7
+        ).pack(side="left", padx=7)
+
+        explicacion = ttk.LabelFrame(panel, text="¿Qué significa encontrar x?")
+        explicacion.grid(row=2, column=0, sticky="nsew", padx=10, pady=(6, 10))
+        explicacion.columnconfigure(0, weight=1)
 
         tk.Label(
-            combinacion,
-            text="Selecciona los vectores que generarán b (Ctrl+clic para elegir varios):",
-            bg=COLOR_FONDO, fg=COLOR_CHOCOLATE,
-            font=("Arial", 9), anchor="w", wraplength=430
-        ).grid(row=0, column=0, sticky="ew", padx=9, pady=(7, 2))
+            explicacion,
+            text=(
+                "Las columnas de A son vectores. Las entradas de x son los pesos que "
+                "multiplican esas columnas para producir b. Si el sistema tiene solución, "
+                "Choco muestra si es única o si existen variables libres."
+            ),
+            bg=COLOR_FONDO,
+            fg=COLOR_CHOCOLATE_MEDIO,
+            font=("Arial", 9),
+            justify="left",
+            anchor="nw",
+            wraplength=470
+        ).grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
 
-        lista = tk.Frame(combinacion, bg=COLOR_FONDO)
-        lista.grid(row=1, column=0, sticky="nsew", padx=9, pady=3)
-        lista.rowconfigure(0, weight=1)
-        lista.columnconfigure(0, weight=1)
-        self.lista_vectores = tk.Listbox(
-            lista, selectmode="extended", exportselection=False,
-            height=5, font=("Consolas", 10),
-            bg=COLOR_BLANCO, fg=COLOR_CHOCOLATE
+    def _crear_panel_combinacion(self, panel):
+        """Asistente visible y desplazable para combinación lineal.
+
+        Se usa un scroll vertical para toda la pestaña. Así, incluso en
+        pantallas de 1366×768, el área de vectores generadores nunca queda
+        comprimida hasta desaparecer. Los generadores se muestran como
+        casillas normales: basta hacer clic, sin Ctrl.
+        """
+
+        panel.rowconfigure(0, weight=1)
+        panel.columnconfigure(0, weight=1)
+
+        # -------------------------------------------------
+        # CONTENEDOR DESPLAZABLE DE TODA LA PESTAÑA
+        # -------------------------------------------------
+        lienzo = tk.Canvas(
+            panel,
+            bg=COLOR_FONDO,
+            highlightthickness=0,
+            yscrollincrement=22
         )
-        self.lista_vectores.grid(row=0, column=0, sticky="nsew")
-        barra = ttk.Scrollbar(lista, orient="vertical", command=self.lista_vectores.yview)
-        barra.grid(row=0, column=1, sticky="ns")
-        self.lista_vectores.configure(yscrollcommand=barra.set)
+        lienzo.grid(row=0, column=0, sticky="nsew")
+
+        barra_general = ttk.Scrollbar(
+            panel,
+            orient="vertical",
+            command=lienzo.yview
+        )
+        barra_general.grid(row=0, column=1, sticky="ns")
+        lienzo.configure(yscrollcommand=barra_general.set)
+
+        contenido = tk.Frame(lienzo, bg=COLOR_FONDO)
+        id_contenido = lienzo.create_window(
+            (0, 0),
+            window=contenido,
+            anchor="nw"
+        )
+        contenido.columnconfigure(0, weight=1)
+
+        contenido.bind(
+            "<Configure>",
+            lambda event: lienzo.configure(scrollregion=lienzo.bbox("all"))
+        )
+        lienzo.bind(
+            "<Configure>",
+            lambda event: lienzo.itemconfigure(
+                id_contenido,
+                width=max(1, event.width)
+            )
+        )
+
+        # -------------------------------------------------
+        # CABECERA COMPACTA
+        # -------------------------------------------------
+        ayuda = tk.Frame(
+            contenido,
+            bg="#FFF9ED",
+            highlightbackground=COLOR_BEIGE,
+            highlightthickness=1
+        )
+        ayuda.grid(row=0, column=0, sticky="ew", padx=9, pady=(8, 4))
+
+        tk.Label(
+            ayuda,
+            text="Combinación lineal: elige b, marca generadores y Choco halla los pesos.",
+            font=("Arial", 9, "bold"),
+            bg="#FFF9ED",
+            fg=COLOR_CHOCOLATE,
+            anchor="w",
+            justify="left",
+            wraplength=500
+        ).pack(fill="x", padx=9, pady=7)
+
+        # -------------------------------------------------
+        # PASO 1 · OBJETIVO
+        # -------------------------------------------------
+        objetivo = ttk.LabelFrame(contenido, text="Paso 1 · Vector objetivo")
+        objetivo.grid(row=1, column=0, sticky="ew", padx=9, pady=4)
+        objetivo.columnconfigure(1, weight=1)
+
+        tk.Label(
+            objetivo,
+            text="Quiero generar:",
+            bg=COLOR_FONDO,
+            fg=COLOR_CHOCOLATE,
+            font=("Arial", 9, "bold")
+        ).grid(row=0, column=0, sticky="w", padx=(9, 6), pady=6)
+
+        self.selector_objetivo_combinacion = ttk.Combobox(
+            objetivo,
+            textvariable=self.nombre_objetivo_combinacion,
+            state="readonly"
+        )
+        self.selector_objetivo_combinacion.grid(
+            row=0, column=1, sticky="ew", padx=(0, 9), pady=6
+        )
+        self.selector_objetivo_combinacion.bind(
+            "<<ComboboxSelected>>",
+            lambda event: self._actualizar_asistente_combinacion()
+        )
+
+        # -------------------------------------------------
+        # PASO 2 · GENERADORES
+        # -------------------------------------------------
+        generadores = ttk.LabelFrame(
+            contenido,
+            text="Paso 2 · Marca los vectores generadores"
+        )
+        generadores.grid(row=2, column=0, sticky="ew", padx=9, pady=4)
+        generadores.columnconfigure(0, weight=1)
+
+        tk.Label(
+            generadores,
+            text=(
+                "Haz clic en las casillas. No necesitas usar Ctrl. "
+                "Los vectores de dimensión distinta al objetivo quedan desactivados."
+            ),
+            bg=COLOR_FONDO,
+            fg=COLOR_CHOCOLATE_MEDIO,
+            font=("Arial", 8, "italic"),
+            justify="left",
+            anchor="w",
+            wraplength=500
+        ).grid(row=0, column=0, sticky="ew", padx=9, pady=(5, 3))
+
+        # Marco directo de checks. Al no estar dentro de otro Canvas interno,
+        # Tkinter siempre reserva la altura real de las casillas.
+        self.marco_checks_vectores = tk.Frame(
+            generadores,
+            bg=COLOR_BLANCO,
+            highlightbackground=COLOR_BEIGE,
+            highlightthickness=1
+        )
+        self.marco_checks_vectores.grid(
+            row=1, column=0, sticky="ew", padx=9, pady=3
+        )
+
+        acciones_sel = tk.Frame(generadores, bg=COLOR_FONDO)
+        acciones_sel.grid(row=2, column=0, sticky="ew", padx=9, pady=(3, 6))
 
         tk.Button(
-            combinacion, text="Encontrar los pesos",
+            acciones_sel,
+            text="Seleccionar compatibles",
+            command=self.seleccionar_vectores_compatibles,
+            bg=COLOR_BEIGE,
+            fg=COLOR_CHOCOLATE,
+            relief="flat",
+            font=("Arial", 8),
+            padx=8,
+            pady=3
+        ).pack(side="left")
+
+        tk.Button(
+            acciones_sel,
+            text="Limpiar selección",
+            command=self.limpiar_seleccion_combinacion,
+            bg=COLOR_BEIGE,
+            fg=COLOR_CHOCOLATE,
+            relief="flat",
+            font=("Arial", 8),
+            padx=8,
+            pady=3
+        ).pack(side="left", padx=5)
+
+        # -------------------------------------------------
+        # PASO 3 · PREVISUALIZACIÓN Y CÁLCULO
+        # -------------------------------------------------
+        vista = ttk.LabelFrame(
+            contenido,
+            text="Paso 3 · Ecuación vectorial y cálculo"
+        )
+        vista.grid(row=3, column=0, sticky="ew", padx=9, pady=(4, 9))
+        vista.columnconfigure(0, weight=1)
+
+        tk.Label(
+            vista,
+            textvariable=self.texto_previsualizacion_combinacion,
+            bg=COLOR_FONDO,
+            fg=COLOR_CHOCOLATE,
+            font=("Consolas", 9, "bold"),
+            justify="left",
+            anchor="w",
+            wraplength=500
+        ).grid(row=0, column=0, sticky="ew", padx=9, pady=(6, 4))
+
+        acciones = tk.Frame(vista, bg=COLOR_FONDO)
+        acciones.grid(row=1, column=0, sticky="ew", padx=9, pady=(0, 7))
+
+        tk.Button(
+            acciones,
+            text="Comprobar y hallar pesos",
             command=self.resolver_combinacion,
-            bg=COLOR_CHOCOLATE, fg=COLOR_BLANCO,
+            bg=COLOR_CHOCOLATE,
+            fg=COLOR_BLANCO,
             activebackground=COLOR_CHOCOLATE_MEDIO,
             activeforeground=COLOR_BLANCO,
-            relief="flat", font=("Arial", 10, "bold"), padx=14, pady=6
-        ).grid(row=2, column=0, sticky="w", padx=9, pady=(5, 9))
+            relief="flat",
+            font=("Arial", 9, "bold"),
+            padx=11,
+            pady=5
+        ).pack(side="left")
+
         tk.Button(
-            combinacion, text="Cargar ejemplo",
+            acciones,
+            text="Cargar ejemplo del profesor",
             command=self.cargar_ejemplo_combinacion,
-            bg=COLOR_RESALTADO, fg=COLOR_CHOCOLATE,
-            relief="flat", padx=9, pady=5
-        ).grid(row=2, column=0, sticky="e", padx=9, pady=(5, 9))
+            bg=COLOR_RESALTADO,
+            fg=COLOR_CHOCOLATE,
+            relief="flat",
+            font=("Arial", 8),
+            padx=8,
+            pady=5
+        ).pack(side="left", padx=6)
+
+    def _actualizar_previsualizacion_axb(self):
+        """Muestra de forma inmediata si las dimensiones de A y b son compatibles."""
+
+        if not hasattr(self, "texto_previsualizacion_axb"):
+            return
+
+        nombre_a = self.nombre_matriz_resolver.get()
+        nombre_b = self.nombre_vector_objetivo.get()
+        if nombre_a not in self.objetos or nombre_b not in self.objetos:
+            self.texto_previsualizacion_axb.set(
+                "Guarda una matriz y un vector compatible para resolver Ax=b."
+            )
+            return
+
+        a = self.objetos[nombre_a]["valor"]
+        b = self.objetos[nombre_b]["valor"]
+        fa, ca = _dimensiones(a)
+        fb, cb = _dimensiones(b)
+        if cb != 1:
+            self.texto_previsualizacion_axb.set(
+                f"{nombre_b} tiene dimensión {fb}×{cb}; b debe ser un vector columna."
+            )
+            return
+
+        if fa == fb:
+            self.texto_previsualizacion_axb.set(
+                f"{nombre_a} ({fa}×{ca}) · x ({ca}×1) = {nombre_b} ({fb}×1)  ✓ compatible"
+            )
+        else:
+            self.texto_previsualizacion_axb.set(
+                f"No compatible: {nombre_a} tiene {fa} filas y {nombre_b} tiene {fb} entradas."
+            )
+
+    def _actualizar_asistente_combinacion(self):
+        """Reconstruye las casillas de vectores según el objetivo seleccionado."""
+
+        if not hasattr(self, "marco_checks_vectores"):
+            return
+
+        objetivo = self.nombre_objetivo_combinacion.get()
+        vectores = [
+            nombre
+            for nombre, datos in self.objetos.items()
+            if datos["tipo"] == "Vector"
+        ]
+
+        if objetivo not in vectores:
+            objetivo = vectores[0] if vectores else ""
+            self.nombre_objetivo_combinacion.set(objetivo)
+
+        seleccion_previa = {
+            nombre
+            for nombre, variable in self.seleccion_vectores_combinacion.items()
+            if variable.get()
+        }
+
+        for widget in self.marco_checks_vectores.winfo_children():
+            widget.destroy()
+        self.seleccion_vectores_combinacion = {}
+
+        if not vectores:
+            tk.Label(
+                self.marco_checks_vectores,
+                text="Aún no hay vectores guardados. Crea vectores en el panel 1.",
+                bg=COLOR_BLANCO,
+                fg=COLOR_CHOCOLATE_MEDIO,
+                anchor="w",
+                justify="left"
+            ).pack(fill="x", padx=8, pady=8)
+            self.texto_previsualizacion_combinacion.set(
+                "Crea primero el vector objetivo y al menos un vector generador."
+            )
+            return
+
+        dimension_objetivo = None
+        if objetivo in self.objetos:
+            dimension_objetivo = len(self.objetos[objetivo]["valor"])
+
+        candidatos = [nombre for nombre in vectores if nombre != objetivo]
+        if not candidatos:
+            tk.Label(
+                self.marco_checks_vectores,
+                text="Crea al menos otro vector para usarlo como generador.",
+                bg=COLOR_BLANCO,
+                fg=COLOR_CHOCOLATE_MEDIO,
+                anchor="w"
+            ).pack(fill="x", padx=8, pady=8)
+
+        for nombre in candidatos:
+            dimension = len(self.objetos[nombre]["valor"])
+            compatible = dimension_objetivo is None or dimension == dimension_objetivo
+            variable = tk.BooleanVar(
+                value=(nombre in seleccion_previa and compatible)
+            )
+            self.seleccion_vectores_combinacion[nombre] = variable
+
+            fila = tk.Frame(self.marco_checks_vectores, bg=COLOR_BLANCO)
+            fila.pack(fill="x", padx=6, pady=2)
+            check = ttk.Checkbutton(
+                fila,
+                text=nombre,
+                variable=variable,
+                command=self._actualizar_previsualizacion_combinacion
+            )
+            check.pack(side="left")
+            if not compatible:
+                check.configure(state="disabled")
+
+            texto_dimension = f"R^{dimension}"
+            if not compatible and dimension_objetivo is not None:
+                texto_dimension += f"  (se requiere R^{dimension_objetivo})"
+            tk.Label(
+                fila,
+                text=texto_dimension,
+                bg=COLOR_BLANCO,
+                fg=COLOR_CHOCOLATE_MEDIO if compatible else COLOR_ERROR,
+                font=("Arial", 8),
+                anchor="e"
+            ).pack(side="right", padx=6)
+
+        self._actualizar_previsualizacion_combinacion()
+
+    def _actualizar_previsualizacion_combinacion(self):
+        """Escribe la ecuación c1·v1+...+cp·vp=b antes de resolverla."""
+
+        objetivo = self.nombre_objetivo_combinacion.get()
+        nombres = [
+            nombre
+            for nombre, variable in self.seleccion_vectores_combinacion.items()
+            if variable.get()
+        ]
+
+        if not objetivo:
+            self.texto_previsualizacion_combinacion.set(
+                "Selecciona primero el vector objetivo."
+            )
+            return
+        if not nombres:
+            self.texto_previsualizacion_combinacion.set(
+                f"Objetivo: {objetivo}. Marca uno o varios vectores generadores."
+            )
+            return
+
+        izquierda = " + ".join(
+            f"c{indice}·{nombre}"
+            for indice, nombre in enumerate(nombres, start=1)
+        )
+        self.texto_previsualizacion_combinacion.set(
+            f"{izquierda} = {objetivo}"
+        )
+
+    def seleccionar_vectores_compatibles(self):
+        """Marca todos los generadores que pertenecen al mismo R^n que el objetivo."""
+
+        objetivo = self.nombre_objetivo_combinacion.get()
+        if objetivo not in self.objetos:
+            return
+        dimension = len(self.objetos[objetivo]["valor"])
+        for nombre, variable in self.seleccion_vectores_combinacion.items():
+            compatible = len(self.objetos[nombre]["valor"]) == dimension
+            variable.set(compatible)
+        self._actualizar_previsualizacion_combinacion()
+
+    def limpiar_seleccion_combinacion(self):
+        for variable in self.seleccion_vectores_combinacion.values():
+            variable.set(False)
+        self._actualizar_previsualizacion_combinacion()
 
     def _crear_panel_resultado(self, padre):
         padre.rowconfigure(0, weight=1)
@@ -2144,7 +2028,7 @@ class AlgebraMatricialVectorialApp:
         self._actualizar_arbol()
 
     def _actualizar_arbol(self):
-        """Sincroniza el inventario de datos con los selectores de solución."""
+        """Sincroniza datos guardados, Ax=b y el asistente de combinación lineal."""
 
         for item in self.arbol.get_children():
             self.arbol.delete(item)
@@ -2158,29 +2042,30 @@ class AlgebraMatricialVectorialApp:
                 values=(datos["tipo"], f"{len(valor)}×{len(valor[0])}")
             )
 
-        # Un vector columna es también una matriz m×1, así que puede ser A
-        # en un sistema con una sola incógnita.
+        # Para A aceptamos cualquier objeto matricial m×n. Un vector columna
+        # también es matemáticamente una matriz m×1, por lo que se conserva.
         matrices = list(self.objetos)
         vectores = [
-            nombre for nombre, datos in self.objetos.items()
+            nombre
+            for nombre, datos in self.objetos.items()
             if datos["tipo"] == "Vector"
         ]
+
         self.selector_matriz.configure(values=matrices)
         self.selector_objetivo.configure(values=vectores)
+        if hasattr(self, "selector_objetivo_combinacion"):
+            self.selector_objetivo_combinacion.configure(values=vectores)
+
         if self.nombre_matriz_resolver.get() not in matrices:
             self.nombre_matriz_resolver.set(matrices[0] if matrices else "")
         if self.nombre_vector_objetivo.get() not in vectores:
             self.nombre_vector_objetivo.set(vectores[0] if vectores else "")
+        if self.nombre_objetivo_combinacion.get() not in vectores:
+            preferido = "b" if "b" in vectores else (vectores[0] if vectores else "")
+            self.nombre_objetivo_combinacion.set(preferido)
 
-        seleccionados = {
-            self.lista_vectores.get(indice)
-            for indice in self.lista_vectores.curselection()
-        }
-        self.lista_vectores.delete(0, "end")
-        for indice, nombre in enumerate(vectores):
-            self.lista_vectores.insert("end", nombre)
-            if nombre in seleccionados:
-                self.lista_vectores.selection_set(indice)
+        self._actualizar_previsualizacion_axb()
+        self._actualizar_asistente_combinacion()
 
     def cargar_seleccion(self):
         seleccion = self.arbol.selection()
@@ -2239,26 +2124,52 @@ class AlgebraMatricialVectorialApp:
             "Ejemplo cargado. Presiona «Calcular y explicar» para comparar A(u+v) con Au+Av."
         )
 
-    def cargar_ejemplo_combinacion(self):
-        """Prepara el ejercicio de combinación lineal de la presentación."""
+    def cargar_ejemplo_axb(self):
+        """Carga un ejemplo sencillo de ecuación matricial con solución única."""
 
+        self._guardar_objeto(
+            "A",
+            [
+                [Fraction(1), Fraction(2)],
+                [Fraction(3), Fraction(-1)]
+            ],
+            "Matriz"
+        )
+        self._guardar_objeto(
+            "b",
+            [[Fraction(5)], [Fraction(4)]],
+            "Vector"
+        )
+        self.nombre_matriz_resolver.set("A")
+        self.nombre_vector_objetivo.set("b")
+        self.cuaderno_operacion.select(self.pestana_resolver)
+        self._actualizar_previsualizacion_axb()
+        self.estado.set(
+            "Ejemplo Ax=b listo. Presiona «Resolver y explicar»."
+        )
+
+    def cargar_ejemplo_combinacion(self):
+        """Carga el ejemplo de combinación lineal usado en las fuentes del curso."""
+
+        # b = 3a1 + 2a2
         a1 = [[Fraction(1)], [Fraction(-2)], [Fraction(-5)]]
         a2 = [[Fraction(2)], [Fraction(5)], [Fraction(6)]]
         b = [[Fraction(7)], [Fraction(4)], [Fraction(-3)]]
+
         self._guardar_objeto("a1", a1, "Vector")
         self._guardar_objeto("a2", a2, "Vector")
         self._guardar_objeto("b", b, "Vector")
-        self._guardar_objeto("M", [[a1[i][0], a2[i][0]] for i in range(3)], "Matriz")
-        self.nombre_matriz_resolver.set("M")
-        self.nombre_vector_objetivo.set("b")
-        self.lista_vectores.selection_clear(0, "end")
-        for indice in range(self.lista_vectores.size()):
-            if self.lista_vectores.get(indice) in ("a1", "a2"):
-                self.lista_vectores.selection_set(indice)
-        self.cuaderno_operacion.select(self.pestana_resolver)
+
+        self.nombre_objetivo_combinacion.set("b")
+        self._actualizar_asistente_combinacion()
+        for nombre in ("a1", "a2"):
+            if nombre in self.seleccion_vectores_combinacion:
+                self.seleccion_vectores_combinacion[nombre].set(True)
+        self._actualizar_previsualizacion_combinacion()
+        self.cuaderno_operacion.select(self.pestana_combinacion)
         self.estado.set(
-            "Ejemplo listo: b = 3a1 + 2a2. Pulsa «Encontrar los pesos» "
-            "o resuelve Mx=b."
+            "Ejemplo listo: comprueba si b puede generarse con a1 y a2. "
+            "Presiona «Comprobar y hallar pesos»."
         )
 
     # -----------------------------------------------------
@@ -2556,7 +2467,7 @@ class AlgebraMatricialVectorialApp:
         return a, b
 
     def _resolver_datos(self, a, b, nombres, titulo, combinacion=False, variable="x"):
-        """Usa resolver_sistema([A|b]) para hallar pesos o incógnitas."""
+        """Resuelve [A|b] y presenta primero la respuesta, luego el procedimiento."""
 
         from sistemas_eliminacion import resolver_sistema
 
@@ -2566,44 +2477,150 @@ class AlgebraMatricialVectorialApp:
         if len(nombres) != columnas:
             raise ValueError("Se requiere un nombre por columna de A.")
 
-        # El eliminador existente utiliza tolerancia 1e-10 y números reales.
-        # Las entradas originales siguen siendo Fraction para presentarlas sin redondeo.
         aumentada = [
             [float(valor) for valor in fila_a] + [float(fila_b[0])]
             for fila_a, fila_b in zip(a, b)
         ]
         resultado = resolver_sistema(aumentada, columnas)
         clasificacion = resultado["clasificacion"]
-
-        lineas = [
-            titulo.upper(),
-            "=" * 68,
-            f"A tiene {len(a)} filas y {columnas} columnas. "
-            f"b tiene {len(b)} entradas.",
-            "A =", _texto_matriz(a), "",
-            "b =", _texto_matriz(b), "",
-            "SISTEMA EQUIVALENTE",
-            "=" * 68,
-            f"{variable} tiene {columnas} componentes.",
-            "[A | b] =", self._texto_aumentada(a, b), ""
-        ]
+        es_homogeneo = all(fila[0] == 0 for fila in b)
 
         etiquetas = (
             [f"c{j + 1}" for j in range(columnas)] if combinacion else nombres
         )
 
+        # Preparar pesos/solución particular y expresiones paramétricas.
+        reducida = resultado["matriz_reducida"]
+        pesos = None
+        parametros = []
+        if clasificacion == "unica":
+            pesos = resultado["solucion"]
+        elif clasificacion == "infinitas":
+            libres = resultado["variables_libres"]
+            pivotes = resultado["pivotes"]
+            pesos = [0.0] * columnas
+            for fila, j in pivotes:
+                pesos[j] = reducida[fila][-1]
+
+            for numero, j in enumerate(libres, start=1):
+                parametros.append(f"{etiquetas[j]} = t{numero}")
+            for fila, j in pivotes:
+                constante = reducida[fila][-1]
+                partes = []
+                if abs(constante) >= 1e-10:
+                    partes.append(self._numero_de_eliminacion(constante))
+
+                for numero, libre in enumerate(libres, start=1):
+                    coeficiente = -reducida[fila][libre]
+                    if abs(coeficiente) < 1e-10:
+                        continue
+
+                    magnitud = self._numero_de_eliminacion(abs(coeficiente))
+                    termino = f"{magnitud}·t{numero}"
+                    if not partes:
+                        partes.append(("-" if coeficiente < 0 else "") + termino)
+                    else:
+                        partes.append(("- " if coeficiente < 0 else "+ ") + termino)
+
+                if not partes:
+                    partes.append("0")
+                parametros.append(f"{etiquetas[j]} = {' '.join(partes)}")
+
+        lineas = [
+            titulo.upper(),
+            "=" * 72,
+            "RESPUESTA RÁPIDA",
+            "=" * 72
+        ]
+
+        if clasificacion == "inconsistente":
+            if combinacion:
+                lineas.extend([
+                    "✗ NO. El vector objetivo no es combinación lineal de los vectores seleccionados.",
+                    "No existe ningún conjunto de pesos que produzca b."
+                ])
+            else:
+                lineas.extend([
+                    "✗ El sistema es inconsistente: no existe un vector x que cumpla Ax=b."
+                ])
+        elif clasificacion == "unica":
+            if combinacion:
+                lineas.append("✓ SÍ. El vector objetivo es combinación lineal.")
+                lineas.append("Pesos únicos:")
+                for j in range(columnas):
+                    lineas.append(
+                        f"  {etiquetas[j]} (peso de {nombres[j]}) = "
+                        f"{self._numero_de_eliminacion(pesos[j])}"
+                    )
+                expresion = " + ".join(
+                    f"({self._numero_de_eliminacion(pesos[j])}){nombres[j]}"
+                    for j in range(columnas)
+                )
+                lineas.append(f"  {expresion} = b")
+            else:
+                lineas.append("✓ El sistema tiene solución única.")
+                for j in range(columnas):
+                    lineas.append(
+                        f"  {etiquetas[j]} = {self._numero_de_eliminacion(pesos[j])}"
+                    )
+        else:
+            if combinacion:
+                lineas.extend([
+                    "✓ SÍ. El vector objetivo es combinación lineal.",
+                    "Existen infinitos conjuntos de pesos porque hay al menos una variable libre."
+                ])
+            else:
+                lineas.extend([
+                    "✓ El sistema es consistente y tiene infinitas soluciones.",
+                    "Hay al menos una variable libre."
+                ])
+            if parametros:
+                lineas.append("Solución general:")
+                lineas.extend(f"  {linea}" for linea in parametros)
+
+        if es_homogeneo and not combinacion:
+            lineas.extend([
+                "",
+                "Tipo de sistema: homogéneo (b = 0).",
+                "La solución trivial x=0 siempre existe."
+            ])
+            if clasificacion == "infinitas":
+                lineas.append(
+                    "Como hay variables libres, también existen soluciones no triviales."
+                )
+
+        lineas.extend([
+            "",
+            "PLANTEAMIENTO",
+            "=" * 72,
+            f"A tiene {len(a)} filas y {columnas} columnas. b tiene {len(b)} entradas.",
+            "A =", _texto_matriz(a), "",
+            "b =", _texto_matriz(b), "",
+        ])
+
         if combinacion:
             lineas.extend([
-                "Las columnas elegidas forman A. Los valores de c son sus pesos:",
+                "Ecuación vectorial:",
                 " + ".join(f"c{j + 1}·{nombres[j]}" for j in range(columnas))
-                + " = b",
+                + f" = {self.nombre_objetivo_combinacion.get() or 'b'}",
+                "",
+                "Matriz aumentada equivalente [a1 a2 ... ap | b] =",
+                self._texto_aumentada(a, b),
                 ""
+            ])
+        else:
+            lineas.extend([
+                "Ecuación matricial:",
+                f"A{variable} = b",
+                f"{variable} tiene {columnas} componentes.",
+                "[A | b] =", self._texto_aumentada(a, b), ""
             ])
 
         lineas.extend([
-            "ELIMINACIÓN POR FILAS (PROGRAMA ANTERIOR)",
-            "=" * 68
+            "PROCEDIMIENTO · ELIMINACIÓN POR FILAS (PROGRAMA ANTERIOR)",
+            "=" * 72
         ])
+
         if resultado["pasos"]:
             for indice, paso in enumerate(resultado["pasos"], start=1):
                 fase = "Gauss" if paso["fase"] == "escalonamiento" else "Gauss-Jordan"
@@ -2613,74 +2630,33 @@ class AlgebraMatricialVectorialApp:
                     ""
                 ])
         else:
-            lineas.append("La matriz ya estaba escalonada; no hicieron falta operaciones.")
+            lineas.append("La matriz ya estaba suficientemente reducida; no hicieron falta operaciones.")
 
         lineas.extend([
             "FORMA ESCALONADA:",
             self._texto_matriz_eliminacion(resultado["matriz_escalonada"]),
-            "",
-            "RESULTADO",
-            "=" * 68
+            ""
         ])
 
         if clasificacion == "inconsistente":
             fila = resultado["fila_inconsistente"]
             termino = resultado["matriz_escalonada"][fila][-1]
             lineas.extend([
-                f"Fila {fila + 1}: 0 = {self._numero_de_eliminacion(termino)}.",
-                "El sistema no tiene solución.",
-                (
-                    "Por tanto, b NO es combinación lineal de los vectores elegidos."
-                    if combinacion else "No existe un vector x que cumpla Ax=b."
-                )
+                "CLASIFICACIÓN",
+                "=" * 72,
+                f"Se obtuvo una contradicción en la fila {fila + 1}: "
+                f"0 = {self._numero_de_eliminacion(termino)}.",
+                "El sistema no tiene solución."
             ])
             return "\n".join(lineas)
 
-        reducida = resultado["matriz_reducida"]
         lineas.extend([
             "FORMA ESCALONADA REDUCIDA:",
-            self._texto_matriz_eliminacion(reducida), ""
+            self._texto_matriz_eliminacion(reducida),
+            "",
+            "VERIFICACIÓN",
+            "=" * 72
         ])
-
-        if clasificacion == "unica":
-            pesos = resultado["solucion"]
-            lineas.extend([
-                "Solución única:",
-                *(
-                    f"{etiquetas[j]}" + (
-                        f" (peso de {nombres[j]})" if combinacion else ""
-                    ) + " = "
-                    f"{self._numero_de_eliminacion(pesos[j])}"
-                    for j in range(columnas)
-                )
-            ])
-        else:
-            libres = resultado["variables_libres"]
-            pivotes = resultado["pivotes"]
-            lineas.extend([
-                "Infinitas soluciones:",
-                "Variables libres: " + ", ".join(etiquetas[j] for j in libres) + ".",
-                "Asigna libremente un valor a cada parámetro:"
-            ])
-            for numero, j in enumerate(libres, start=1):
-                lineas.append(f"{etiquetas[j]} = t{numero}")
-
-            # Cada fila pivote en la RREF indica:
-            # x_pivote = b_fila - suma(coeficiente_libre · t).
-            for fila, j in pivotes:
-                texto = self._numero_de_eliminacion(reducida[fila][-1])
-                for numero, libre in enumerate(libres, start=1):
-                    coeficiente = reducida[fila][libre]
-                    if abs(coeficiente) >= 1e-10:
-                        signo = " - " if coeficiente > 0 else " + "
-                        magnitud = self._numero_de_eliminacion(abs(coeficiente))
-                        texto += f"{signo}{magnitud}·t{numero}"
-                lineas.append(f"{etiquetas[j]} = {texto}")
-
-            pesos = [0.0] * columnas
-            for fila, j in pivotes:
-                pesos[j] = reducida[fila][-1]
-            lineas.append("Una solución particular se obtiene tomando todos los t = 0.")
 
         x_aprox = [[valor] for valor in pesos]
         producto = _multiplicar_matrices(a, x_aprox)
@@ -2690,48 +2666,35 @@ class AlgebraMatricialVectorialApp:
             for i in range(len(b))
         )
         lineas.extend([
-            "",
-            f"{variable} =",
+            f"{variable} particular =",
             self._texto_matriz_eliminacion(x_aprox),
             "",
-            "VERIFICACIÓN",
-            "=" * 68,
             f"A{variable} =",
             self._texto_matriz_eliminacion(producto),
-            "La sustitución reproduce b." if coincide else
-            "La verificación numérica no coincide; revisa los datos."
+            "✓ La sustitución reproduce b." if coincide else
+            "✗ La verificación numérica no coincide; revisa los datos."
         ])
 
         if combinacion:
-            combinacion_texto = " + ".join(
-                f"({self._numero_de_eliminacion(pesos[j])}){nombres[j]}"
-                for j in range(columnas)
-            )
             lineas.extend([
                 "",
-                "CONCLUSIÓN SOBRE COMBINACIÓN LINEAL",
-                "=" * 68,
-                "Sí, b es combinación lineal de los vectores elegidos.",
-                combinacion_texto + " = b.",
-                (
-                    "Estos pesos son los únicos."
-                    if clasificacion == "unica" else
-                    "Hay infinitas elecciones de pesos; arriba se muestra una."
-                )
+                "INTERPRETACIÓN",
+                "=" * 72,
+                "Los números c1, c2, ... son los pesos de los vectores seleccionados.",
+                "Encontrar esos pesos equivale a resolver el sistema cuya matriz aumentada "
+                "es [a1 a2 ... ap | b]."
             ])
         else:
             lineas.extend([
                 "",
                 "INTERPRETACIÓN",
-                "=" * 68,
-                (
-                    "b se obtiene combinando las columnas de A con los pesos de x."
-                    if coincide else "Revisa el redondeo de los coeficientes."
-                )
+                "=" * 72,
+                "Las entradas de x son los pesos de las columnas de A que producen b."
             ])
+
         lineas.extend([
             "",
-            "El algoritmo de eliminación clasifica valores reales con tolerancia 1e-10."
+            "El algoritmo reutiliza el módulo anterior de eliminación y usa tolerancia 1e-10."
         ])
         return "\n".join(lineas)
 
@@ -2758,43 +2721,63 @@ class AlgebraMatricialVectorialApp:
         self.estado.set(f"Choco dice: resolví {nombre_a}{incognita}={nombre_b} por eliminación.")
 
     def resolver_combinacion(self):
-        """Comprueba si b está en el espacio generado por los vectores elegidos."""
+        """Comprueba si el objetivo es combinación lineal y encuentra los pesos."""
 
         try:
-            nombre_b = self.nombre_vector_objetivo.get()
-            if nombre_b not in self.objetos or len(self.objetos[nombre_b]["valor"][0]) != 1:
-                raise ValueError("Selecciona primero el vector objetivo b.")
+            nombre_b = self.nombre_objetivo_combinacion.get()
+            if (
+                nombre_b not in self.objetos
+                or self.objetos[nombre_b]["tipo"] != "Vector"
+            ):
+                raise ValueError("Selecciona primero un vector objetivo válido.")
+
             nombres = [
-                self.lista_vectores.get(indice)
-                for indice in self.lista_vectores.curselection()
+                nombre
+                for nombre, variable in self.seleccion_vectores_combinacion.items()
+                if variable.get()
             ]
             if not nombres:
-                raise ValueError("Selecciona al menos un vector de la lista (Ctrl+clic para varios).")
-            if nombre_b in nombres:
-                raise ValueError("El vector objetivo b no debe elegirse entre sus generadores.")
+                raise ValueError(
+                    "Marca al menos un vector generador en el Paso 2."
+                )
 
             b = self.objetos[nombre_b]["valor"]
+            dimension = len(b)
             for nombre in nombres:
-                if len(self.objetos[nombre]["valor"]) != len(b):
+                vector = self.objetos[nombre]["valor"]
+                if len(vector) != dimension:
                     raise ValueError(
-                        f"{nombre} tiene {len(self.objetos[nombre]['valor'])} entradas "
-                        f"y {nombre_b} tiene {len(b)}. Todos deben estar en R^{len(b)}."
+                        f"{nombre} está en R^{len(vector)} y {nombre_b} está en R^{dimension}. "
+                        "Todos los vectores deben tener la misma dimensión."
                     )
+
+            # A se construye poniendo los vectores seleccionados como columnas,
+            # exactamente como indica la equivalencia [a1 a2 ... ap | b].
             a = [
                 [self.objetos[nombre]["valor"][i][0] for nombre in nombres]
-                for i in range(len(b))
+                for i in range(dimension)
             ]
             salida = self._resolver_datos(
-                a, b, nombres,
+                a,
+                b,
+                nombres,
                 f"¿{nombre_b} es combinación lineal de {', '.join(nombres)}?",
-                combinacion=True, variable="c"
+                combinacion=True,
+                variable="c"
             )
         except (ValueError, OverflowError, ZeroDivisionError) as error:
             self.estado.set(f"No se pudo comprobar: {error}")
-            messagebox.showerror("Combinación lineal", str(error), parent=self.ventana)
+            messagebox.showerror(
+                "Combinación lineal",
+                f"Choco dice: {error}",
+                parent=self.ventana
+            )
             return
+
         self._mostrar_resultado(salida)
-        self.estado.set("Choco dice: comprobé la combinación lineal por eliminación.")
+        self.estado.set(
+            "Choco dice: comprobé si el objetivo es combinación lineal y calculé sus pesos."
+        )
 
     # -----------------------------------------------------
     # PRESENTACIÓN DEL PROCEDIMIENTO
@@ -3171,17 +3154,17 @@ class AlgebraMatricialVectorialApp:
         return (
             "CÓMO USAR ESTE MÓDULO\n"
             "=" * 72 + "\n"
-            "1. Crea matrices o vectores con nombres como A, B, u, v, x o b.\n"
-            "2. También puedes pegar un sistema de ecuaciones para crear A y b.\n"
-            "3. En «Operaciones libres» calcula expresiones como A(u+v).\n"
-            "4. En «Resolver Ax=b» selecciona A y b, o elige vectores "
-            "para comprobar si generan b.\n\n"
-            "Ejemplos admitidos:\n"
-            "  A(u+v)     Au+Av     Ax=b     A+B     A-B\n"
-            "  AB         A*B       3A       (1/2)A\n"
-            "  T(A)       A^T       det(A)\n\n"
-            "Si x no está guardado, Ax=b encuentra x; si ya existe, comprueba la igualdad.\n"
-            "El panel se puede agrandar o reducir arrastrando la barra café horizontal."
+            "1. PANEL 1: crea matrices o vectores por celdas, o pega un sistema de ecuaciones.\n"
+            "2. OPERACIONES LIBRES: usa expresiones como u+v, 3u, A+B, AB, A(u+v) o det(A).\n"
+            "3. RESOLVER Ax=b: selecciona A y b; Choco encuentra x mediante el programa anterior.\n"
+            "4. COMBINACIÓN LINEAL: elige el vector objetivo, marca los generadores y Choco \n"
+            "   construye automáticamente [a1 a2 ... ap | b] para decidir si existe la combinación.\n\n"
+            "Ejemplos admitidos en Operaciones libres:\n"
+            "  u+v        u-v        3u        A(u+v)     Au+Av\n"
+            "  A+B        A-B        AB        A*B        3A\n"
+            "  T(A)       A^T        det(A)    Ax=b\n\n"
+            "La dimensión n de los vectores no está fijada: puedes trabajar con R², R³, Rⁿ, etc.\n"
+            "El panel de resultados se puede agrandar arrastrando la barra café horizontal."
         )
 
 
@@ -3329,8 +3312,8 @@ class ChocoLabMenu:
             fila=5,
             titulo="Álgebra matricial y vectorial",
             descripcion=(
-                "Operaciones con matrices, vectores, Ax, combinación "
-                "lineal y representación fila-vector."
+                "Operaciones libres, resolución de Ax=b y combinación lineal "
+                "con cálculo guiado de pesos."
             ),
             comando=self.abrir_algebra
         )
