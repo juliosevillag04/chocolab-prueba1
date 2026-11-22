@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta name="description" content="Choco Lab: aprendizaje de métodos numéricos y Álgebra Lineal. Sistemas lineales, matrices, vectores, determinantes, métodos numéricos, conversiones y números romanos.">
+  <title>Choco Lab — Laboratorio matemático</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static',filename='img/chocolab.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static',filename='css/estilos.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static',filename='css/laboratorio.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static',filename='css/iterativos.css') }}">
+  <script defer src="{{ url_for('static',filename='vendor/plotly.min.js') }}"></script>
+  <script defer src="{{ url_for('static',filename='js/app.js') }}"></script>
+  <script defer src="{{ url_for('static',filename='js/laboratorio.js') }}"></script>
+  <script defer src="{{ url_for('static',filename='js/iterativos.js') }}"></script>
+  <link rel="stylesheet" href="{{ url_for('static',filename='css/algebra.css') }}">
+  <script type="module" src="{{ url_for('static',filename='js/algebra.js') }}"></script>
+</head>
+<body data-theme="light">
+  <div class="site-wrap">
+    <header class="header">
+      <button class="brand" data-view="home" aria-label="Volver al inicio">
+        <img src="{{ url_for('static',filename='img/chocolab.png') }}" alt="Choco Lab" class="brand-logo">
+      </button>
+      <nav class="nav" aria-label="Navegación principal">
+        <button data-view="home" class="navlink is-current" id="nav-home">Inicio</button>
+        <button data-view="algebra" class="navlink" id="nav-algebra">Álgebra lineal</button>
+        <button data-view="methods" class="navlink" id="nav-methods">Métodos numéricos</button>
+        <button data-view="complementary" class="navlink" id="nav-complementary">Temas complementarios</button>
+      </nav>
+      <div class="header-right">
+        <button id="theme-switch" type="button" class="theme-switch" aria-label="Activar modo oscuro" title="Cambiar modo claro / oscuro">
+          <span class="theme-sun" aria-hidden="true">☼</span><span class="switch-track"><span class="switch-thumb"></span></span><span class="theme-moon" aria-hidden="true">☾</span>
+        </button>
+        <img src="{{ url_for('static',filename='img/logofia.png') }}" alt="Facultad de Ingeniería y Arquitectura" class="faculty-logo">
+      </div>
+    </header>
+
+    <main>
+      <!-- Portada -->
+      <section id="view-home" class="view home-view" aria-labelledby="home-title">
+        <div class="home-hero">
+          <div class="hero-content">
+            <div class="eyebrow"><span class="status-dot"></span> LABORATORIO MATEMÁTICO · UAM</div>
+            <img src="{{ url_for('static',filename='img/chocolab.png') }}" alt="Logo principal de Choco Lab" class="hero-logo">
+            <h1 id="home-title">Importa problemas, <em>exporta soluciones.</em></h1>
+            <p>Explora, experimenta y comprende los procedimientos matemáticos con herramientas visuales e interactivas.</p>
+            <button class="btn btn-primary hero-cta" data-view="methods">Explorar métodos numéricos <span aria-hidden="true">↗</span></button>
+          </div>
+          <div class="hero-art" aria-hidden="true">
+            <div class="decor-grid"></div>
+            <svg viewBox="0 0 480 360" class="hero-graph">
+              <path d="M20 260 H465 M78 25 V335" stroke="currentColor" opacity=".26" fill="none" stroke-width="2"/>
+              <path d="M25 55 C70 60 75 230 144 259 S270 310 316 236 S399 132 466 35" stroke="#c58b64" stroke-width="5" fill="none" stroke-linecap="round"/>
+              <path d="M145 260 V95 M316 260 V100" stroke="#8e5035" stroke-dasharray="6 7" stroke-width="2"/>
+              <circle cx="145" cy="260" r="9" fill="#d7aa7b" stroke="#7b3d27" stroke-width="3"/><circle cx="316" cy="236" r="9" fill="#d7aa7b" stroke="#7b3d27" stroke-width="3"/>
+              <text x="132" y="283" font-size="22" fill="currentColor">a</text><text x="308" y="283" font-size="22" fill="currentColor">b</text>
+            </svg>
+            <div class="hero-annotation">f(x) = 0 <span>↗</span></div>
+          </div>
+        </div>
+        <div class="section-heading"><div><span class="overline">ÁREAS DE ESTUDIO</span><h2>Selecciona un módulo</h2></div><span class="muted small">Elige un área para comenzar</span></div>
+        <div class="module-grid">
+          <button class="module-card" data-view="algebra">
+            <span class="module-icon">∑</span><span class="module-index">01 / FUNDAMENTOS</span>
+            <strong>Álgebra lineal</strong><span>Resuelve sistemas, trabaja con matrices y vectores y calcula determinantes.</span>
+            <span class="module-bottom"><span class="pill pill-live">4 herramientas disponibles</span><span class="arrow">↗</span></span>
+          </button>
+          <button class="module-card module-active" data-view="methods">
+            <span class="module-icon">ƒ</span><span class="module-index">02 / CÁLCULO NUMÉRICO</span>
+            <strong>Métodos numéricos</strong><span>Explora raíces de funciones y sistemas lineales con procedimientos iterativos.</span>
+            <span class="module-bottom"><span class="pill pill-live">6 métodos disponibles</span><span class="arrow">↗</span></span>
+          </button>
+          <button class="module-card module-active" data-view="complementary">
+            <span class="module-icon">Ⅻ</span><span class="module-index">03 / CONVERSIÓN Y OPERACIONES</span>
+            <strong>Temas complementarios</strong><span>Convierte sistemas numéricos, números romanos y resuelve operaciones.</span>
+            <span class="module-bottom"><span class="pill pill-live">2 herramientas disponibles</span><span class="arrow">↗</span></span>
+          </button>
+        </div>
+      </section>
+
+      {% include "lab_secciones.html" %}
+
+      <section id="view-methods" class="view content-view method-catalog" hidden>
+        <div class="breadcrumb"><button data-view="home">Inicio</button><span>/</span><span>Métodos numéricos</span></div>
+        <div class="catalog-hero"><div><h1>Métodos <em>numéricos</em></h1><p>Elige una familia para abrir sus métodos.</p></div><span class="catalog-decor" aria-hidden="true">ƒ(x)</span></div>
+        <div class="catalog-grid method-families">
+          <button type="button" class="catalog-card" data-view="methods-cerrados">
+            <span class="catalog-card-symbol" aria-hidden="true">🔒</span><strong>Métodos cerrados</strong>
+            <span>Aproxima una raíz a partir de un intervalo con cambio de signo.</span><span class="catalog-card-bottom">Bisección y regla falsa <b aria-hidden="true">↗</b></span>
+          </button>
+          <button type="button" class="catalog-card" data-view="methods-abiertos">
+            <span class="catalog-card-symbol" aria-hidden="true">🔓</span><strong>Métodos abiertos</strong>
+            <span>Aproxima una raíz a partir de uno o dos puntos iniciales.</span><span class="catalog-card-bottom">Newton-Raphson y secante <b aria-hidden="true">↗</b></span>
+          </button>
+          <button type="button" class="catalog-card" data-view="methods-iterativos">
+            <span class="catalog-card-symbol" aria-hidden="true">🔄️</span><strong>Métodos iterativos para sistemas lineales</strong>
+            <span>Aproxima la solución de Ax = b mediante iteraciones sucesivas.</span><span class="catalog-card-bottom">Jacobi y Gauss-Seidel <b aria-hidden="true">↗</b></span>
+          </button>
+        </div>
+      </section>
+      <section id="view-methods-cerrados" class="view content-view method-catalog" hidden>
+        <div class="breadcrumb"><button data-view="home">Inicio</button><span>/</span><button data-view="methods">Métodos numéricos</button><span>/</span><span>Métodos cerrados</span></div>
+        <button type="button" class="back-to-methods" data-view="methods">← Volver a las familias</button>
+        <div class="catalog-hero"><div><h1>Métodos cerrados</h1><p>Aproxima una raíz a partir de un intervalo con cambio de signo.</p></div><span class="catalog-decor" aria-hidden="true">[a, b]</span></div>
+        <div class="catalog-grid">
+          <button type="button" class="catalog-card" data-method="biseccion" aria-label="Abrir método de Bisección">
+            <span class="catalog-card-top"><span class="catalog-card-symbol" aria-hidden="true">½</span><span class="catalog-status">Disponible</span></span>
+            <strong>Método de Bisección</strong><span>Encuentra una aproximación dividiendo repetidamente el intervalo por la mitad.</span>
+            <span class="catalog-card-bottom"><span>c = (a + b) / 2</span><b aria-hidden="true">↗</b></span>
+          </button>
+          <button type="button" class="catalog-card" data-method="regla_falsa" aria-label="Abrir método de Regla Falsa">
+            <span class="catalog-card-top"><span class="catalog-card-symbol" aria-hidden="true">ƒ</span><span class="catalog-status">Disponible</span></span>
+            <strong>Método de Regla Falsa</strong><span>Estima la raíz mediante la intersección de una recta secante con el eje X.</span>
+            <span class="catalog-card-bottom"><span>Interpolación lineal · Regula Falsi</span><b aria-hidden="true">↗</b></span>
+          </button>
+        </div>
+      </section>
+
+      <section id="view-methods-abiertos" class="view content-view method-catalog" hidden>
+        <div class="breadcrumb"><button data-view="home">Inicio</button><span>/</span><button data-view="methods">Métodos numéricos</button><span>/</span><span>Métodos abiertos</span></div>
+        <button type="button" class="back-to-methods" data-view="methods">← Volver a las familias</button>
+        <div class="catalog-hero"><div><h1>Métodos abiertos</h1><p>Aproxima una raíz a partir de uno o dos puntos iniciales.</p></div><span class="catalog-decor" aria-hidden="true">ƒ′</span></div>
+        <div class="catalog-grid">
+          <button type="button" class="catalog-card" data-method="newton_raphson" aria-label="Abrir método de Newton-Raphson">
+            <span class="catalog-card-top"><span class="catalog-card-symbol" aria-hidden="true">ƒ′</span><span class="catalog-status">Disponible</span></span>
+            <strong>Método de Newton-Raphson</strong><span>Parte de un punto inicial y utiliza rectas tangentes para aproximarse a una raíz de la ecuación.</span>
+            <span class="catalog-card-bottom"><span>Derivada · Recta tangente</span><b aria-hidden="true">↗</b></span>
+          </button>
+          <button type="button" class="catalog-card" data-method="secante" aria-label="Abrir método de la Secante">
+            <span class="catalog-card-top"><span class="catalog-card-symbol" aria-hidden="true">↗</span><span class="catalog-status">Disponible</span></span>
+            <strong>Método de la Secante</strong><span>Utiliza dos aproximaciones iniciales y una recta secante para encontrar raíces sin calcular derivadas.</span>
+            <span class="catalog-card-bottom"><span>Dos puntos iniciales · Recta secante</span><b aria-hidden="true">↗</b></span>
+          </button>
+        </div>
+      </section>
+
+      <section id="view-methods-iterativos" class="view content-view method-catalog" hidden>
+        <div class="breadcrumb"><button data-view="home">Inicio</button><span>/</span><button data-view="methods">Métodos numéricos</button><span>/</span><span>Métodos iterativos para sistemas lineales</span></div>
+        <button type="button" class="back-to-methods" data-view="methods">← Volver a las familias</button>
+        <div class="catalog-hero"><div><h1>Métodos iterativos para sistemas lineales</h1><p>Aproxima la solución de Ax = b mediante iteraciones sucesivas.</p></div><span class="catalog-decor" aria-hidden="true">Ax</span></div>
+        <div class="catalog-grid">
+          <button type="button" class="catalog-card" data-view="iterative-workspace" data-iter-method="jacobi" aria-label="Abrir método de Jacobi">
+            <span class="catalog-card-top"><span class="catalog-card-symbol" aria-hidden="true">J</span><span class="catalog-status">Disponible</span></span>
+            <strong>Método de Jacobi</strong><span>Calcula todas las incógnitas con los valores de la iteración anterior. Examina cada despeje y su convergencia.</span>
+            <span class="catalog-card-bottom"><span>Actualización simultánea · Ax = b</span><b aria-hidden="true">↗</b></span>
+          </button>
+          <button type="button" class="catalog-card" data-view="iterative-workspace" data-iter-method="gauss_seidel" aria-label="Abrir método de Gauss-Seidel">
+            <span class="catalog-card-top"><span class="catalog-card-symbol" aria-hidden="true">GS</span><span class="catalog-status">Disponible</span></span>
+            <strong>Método de Gauss-Seidel</strong><span>Actualiza cada incógnita inmediatamente y sigue la sustitución secuencial componente por componente.</span>
+            <span class="catalog-card-bottom"><span>Actualización secuencial · Ax = b</span><b aria-hidden="true">↗</b></span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Área de trabajo compartida: Bisección, Regla Falsa, Newton-Raphson y Secante -->
+      <section id="view-solver" class="view content-view" hidden>
+        <div class="breadcrumb"><button data-view="home">Inicio</button><span>/</span><button data-view="methods">Métodos numéricos</button><span>/</span><button id="breadcrumb-family" data-view="methods-cerrados">Métodos cerrados</button><span>/</span><span id="breadcrumb-method">Bisección</span></div>
+        <button type="button" class="back-to-methods" id="solver-family-back" data-view="methods-cerrados">← Volver a métodos cerrados</button>
+        <div class="methods-heading">
+          <div><span class="overline" id="solver-category">MÉTODOS CERRADOS · BÚSQUEDA DE RAÍCES</span><h1>Método de <em id="method-title">Bisección</em></h1><p id="method-description">Escribe tu función, selecciona un intervalo válido y observa cómo converge a una raíz.</p></div>
+          <div id="method-formula" class="method-formula" aria-label="Fórmula del punto medio">c = <span class="fraction"><span>a + b</span><span>2</span></span></div>
+        </div>
+        <div class="workspace">
+          <aside class="controls panel">
+            <div class="panel-head"><span class="step-dot">01</span><div><h2>Configurar ejercicio</h2><p id="setup-subtitle">Función e intervalo de búsqueda</p></div></div>
+            <label class="field-label" for="formula-plain">Función f(x)</label>
+            <div class="math-input-wrap">
+              <div class="math-prefix">f(x) =</div>
+              <math-field id="formula-math" class="formula-math" hidden aria-label="Ecuación matemática"></math-field>
+              <input id="formula-plain" type="text" class="formula-plain" value="x^4-5x^3+0.5x^2-11x+10" aria-label="Escribe una función de x" autocomplete="off" spellcheck="false">
+              <button id="keyboard-toggle" type="button" class="icon-btn" title="Teclado matemático" aria-expanded="false" aria-label="Mostrar teclado matemático">⌨</button>
+            </div>
+            <p class="field-hint" id="editor-hint">Puedes escribir x^2, sin(x), sqrt(x), log(x), pi o usar el teclado matemático.</p>
+            <div id="derivative-note" class="derivative-note" hidden><span class="overline">Derivada</span><div id="derivative-value" class="derivative-equation" role="math" aria-label="Derivada de la función"></div></div>
+            <div id="keyboard" class="keyboard" hidden>
+              <div class="keyboard-tabs" role="group" aria-label="Categorías del teclado">
+                <button class="key-tab active" data-keys="basic">123</button><button class="key-tab" data-keys="functions">f(x)</button><button class="key-tab" data-keys="letters">ABC</button><button class="key-tab" data-keys="symbols">#&</button>
+              </div>
+              <div id="keyboard-grid" class="keyboard-grid"></div>
+            </div>
+            <button id="preview-btn" class="btn btn-secondary full">↗ &nbsp; Graficar y buscar raíces</button>
+            <div class="soft-divider"></div>
+            <div class="subhead"><label class="field-label" id="selection-heading">Selección del intervalo</label><span class="hint-badge" id="selection-hint">a &lt; b</span></div>
+            <div class="segment" role="group" aria-label="Modo de selección de datos iniciales">
+              <button id="auto-btn" data-mode="auto" class="segment-option active" aria-pressed="true">✧ Automático</button>
+              <button id="manual-btn" data-mode="manual" class="segment-option" aria-pressed="false">✎ Manual</button>
+            </div>
+            <div id="auto-region">
+              <p class="small muted" style="margin: 8px 0 10px">Selecciona uno de los intervalos detectados. No siempre se encuentran todas las raíces.</p>
+              <div id="candidate-list" class="candidate-list"><div class="empty-note">Primero grafica una función para mostrar posibles raíces.</div></div>
+            </div>
+            <div id="manual-region" hidden>
+              <p class="small muted" style="margin: 8px 0 10px">Escribe a y b o haz dos clics sobre la gráfica para elegirlos.</p>
+            </div>
+            <div id="interval-fields" class="two-fields">
+              <label class="field-label">Valor de a<input id="val-a" type="number" step="any" value="0.6" inputmode="decimal"></label>
+              <label class="field-label">Valor de b<input id="val-b" type="number" step="any" value="1" inputmode="decimal"></label>
+            </div>
+            <div id="newton-region" class="newton-region" hidden>
+              <label class="field-label">1. Selecciona la posible raíz</label>
+              <p class="small muted newton-guide">Elegí A, B, C… para indicar cuál deseas aproximar. La elección orienta el valor inicial, pero no garantiza la convergencia a esa raíz.</p>
+              <div id="newton-candidate-list" class="candidate-list"><div class="empty-note">Primero grafica la función para explorar posibles raíces.</div></div>
+              <label class="field-label" for="val-x0" id="initial-x0-label">2. Valor inicial x₀</label>
+              <input id="val-x0" class="newton-x0-input" type="number" step="any" inputmode="decimal" value="1.5" aria-describedby="newton-mode-hint">
+              <div id="secant-x1-region" class="secant-x1-region" hidden>
+                <label class="field-label" for="val-x1">3. Segundo valor inicial x₁</label>
+                <input id="val-x1" class="newton-x0-input" type="number" step="any" inputmode="decimal" value="2">
+              </div>
+              <p id="newton-mode-hint" class="field-hint">Elige una raíz candidata para obtener un x₀ sugerido.</p>
+            </div>
+            <div class="two-fields small-inputs">
+              <label class="field-label"><span id="precision-label">Precisión |f(c)|</span><input id="precision" type="number" min="0.000000000001" max="1" step="any" value="0.0001"></label>
+              <label class="field-label">Rango gráfico<input id="range" type="text" value="-10, 10" title="Escribe mínimo, máximo. Ejemplo: -10, 10"></label>
+            </div>
+            <div id="max-iterations-region" class="max-iterations-region" hidden>
+              <label class="field-label" for="max-iterations">Máximo de iteraciones</label>
+              <input id="max-iterations" type="number" min="1" max="1000" step="1" value="100" inputmode="numeric">
+              <p class="field-hint">Hasta 100 por defecto. El cálculo termina antes cuando cumple ambos criterios de tolerancia.</p>
+            </div>
+            <button id="solve-btn" class="btn btn-primary full">Resolver por Bisección <span aria-hidden="true">→</span></button>
+            <div id="feedback" class="feedback" role="status" aria-live="polite" hidden></div>
+          </aside>
+
+          <div class="result-area">
+            <section class="plot-panel panel">
+              <div class="plot-toolbar"><div><span class="overline">VISUALIZACIÓN</span><h2>Gráfica de la función</h2></div><div class="plot-toolbar-controls"><button class="chart-btn active" id="focus-roots" title="Acercar la vista a las raíces">Ver raíces</button><button class="chart-btn" id="focus-all" title="Mostrar todo el rango elegido">Rango completo</button><div class="legend"><span><i class="legend-line"></i> f(x)</span><span><i class="legend-point"></i> <span id="plot-legend-text">raíz / c</span></span></div></div></div>
+              <div id="plot" class="plot" aria-label="Gráfica interactiva de la función"></div>
+              <div class="plot-hint" id="plot-hint">Usa la rueda del mouse para ampliar. En modo manual, selecciona dos posiciones sobre la gráfica.</div>
+              <div class="plot-bottom"><span class="muted small">Detección numérica en rango seleccionado</span><div id="plot-status" class="mini-status">Sin calcular</div></div>
+            </section>
+            <div class="summary-grid">
+              <div class="metric panel"><span class="metric-label">RAÍZ APROXIMADA</span><strong id="summary-root">—</strong><small id="summary-root-sub">Pendiente de resolver</small></div>
+              <div class="metric panel"><span class="metric-label">ITERACIONES</span><strong id="summary-iterations">—</strong><small id="summary-iterations-sub">Convergencia</small></div>
+              <div class="metric panel"><span class="metric-label" id="summary-error-label">ERROR |f(c)|</span><strong id="summary-error">—</strong><small id="summary-error-sub">Residuo absoluto</small></div>
+            </div>
+          </div>
+        </div>
+
+        <section class="iterations panel" id="iterations-section">
+          <div class="iterations-header"><div><span class="overline">PROCEDIMIENTO NUMÉRICO</span><h2>Tabla de iteraciones</h2><p id="iterations-hint">Selecciona una fila para visualizar el intervalo de esa iteración en la gráfica.</p></div><div class="table-actions"><button class="btn btn-subtle" id="prev-step" disabled>← Anterior</button><button class="btn btn-subtle" id="next-step" disabled>Siguiente →</button><button class="btn btn-secondary" id="show-all" disabled>Ver todas</button><button class="btn btn-subtle" id="csv-btn" disabled>↓ CSV</button></div></div>
+          <div class="table-scroll"><table class="data-table" id="iteration-table"><thead><tr><th id="head-it">It</th><th>a</th><th>b</th><th id="head-c">c = (a+b)/2</th><th>f(a)</th><th>f(b)</th><th id="head-fc">f(c)</th><th id="head-error">Error = |f(c)|</th><th>Decisión</th></tr></thead><tbody id="iteration-body"><tr><td colspan="9" class="empty-cell">Completa los datos y pulsa «Resolver por Bisección» para ver las iteraciones.</td></tr></tbody></table></div>
+          <div class="table-foot"><div id="result-explanation">El error mostrado es |f(c)|. Se detiene al ser menor o igual que la precisión indicada.</div><span id="step-counter" class="small muted"></span></div>
+        </section>
+      </section>
+      {% include "iterativos_secciones.html" %}
+    </main>
+
+    <footer class="footer"><span>© 2026 Choco Lab · Laboratorio matemático</span><span id="lab-ram" title="Memoria del proceso Python, no del navegador"></span><span>Ingeniería & Arquitectura · UAM</span><button data-view="home">Volver al inicio ↑</button></footer>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>

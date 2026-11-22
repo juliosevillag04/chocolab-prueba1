@@ -1,0 +1,76 @@
+<!-- Choco Lab · espacio de trabajo de métodos iterativos (Jacobi / Gauss-Seidel) -->
+<section id="view-iterative-workspace" class="view content-view iter-page iter-method-jacobi" hidden>
+  <div class="breadcrumb"><button data-view="home">Inicio</button><span>/</span><button data-view="methods">Métodos numéricos</button><span>/</span><button data-view="methods-iterativos">Métodos iterativos para sistemas lineales</button><span>/</span><span id="iter-breadcrumb">Jacobi</span></div>
+  <button class="back-to-methods" data-view="methods-iterativos">← Volver a métodos iterativos</button>
+  <div class="methods-heading iter-heading">
+    <div><span class="overline">MÉTODOS ITERATIVOS · SISTEMAS Ax = b</span><h1>Método de <em id="iter-title">Jacobi</em></h1><p id="iter-subtitle">Aproxima simultáneamente las incógnitas de un sistema lineal a partir del vector anterior.</p></div>
+    <div class="iter-header-equation" id="iter-header-equation" aria-label="Fórmula general del método">xᵢ⁽ᵏ⁺¹⁾ = [bᵢ − Σ aᵢⱼxⱼ⁽ᵏ⁾] / aᵢᵢ</div>
+  </div>
+  <nav class="iter-local-nav" aria-label="Secciones del laboratorio">
+    <a href="#iter-setup">01 · Datos</a><a href="#iter-diagnostic">02 · Diagnóstico</a><a href="#iter-graph-section">03 · Gráficas</a><a href="#iter-development">04 · Desarrollo</a><a href="#iter-table-section">05 · Tabla</a><a href="#iter-verify-section">06 · Verificación</a><a href="#iter-compare-section">07 · Comparar</a>
+  </nav>
+
+  <!-- El editor ocupa el ancho de la página, no una barra lateral estrecha. -->
+  <section class="panel iter-section iter-setup" id="iter-setup">
+    <div class="iter-section-head"><span class="step-dot">01</span><div><span class="overline">ENTRADA DEL SISTEMA</span><h2>Configuración del ejercicio</h2><p>Define las incógnitas e introduce el sistema completo. Puedes cambiar entre ecuaciones y casillas.</p></div></div>
+    <div class="iter-setup-grid">
+      <label class="iter-field">Cantidad de ecuaciones e incógnitas <select id="iter-dim" aria-label="Número de incógnitas"></select><small>Jacobi y Gauss-Seidel trabajan aquí con sistemas cuadrados de 2 a 15 incógnitas.</small></label>
+      <fieldset class="iter-field"><legend>Modo de entrada</legend><div class="segment iter-segment" role="group" aria-label="Forma de introducir el sistema"><button id="iter-entry-equations" type="button" class="segment-option active" aria-pressed="true">∑ Ecuaciones</button><button id="iter-entry-matrix" type="button" class="segment-option" aria-pressed="false">▦ Matriz aumentada</button></div></fieldset>
+      <fieldset class="iter-field"><legend>Coordenadas</legend><div class="segment iter-segment" role="group" aria-label="Modo de coordenadas"><button id="iter-coord-math" type="button" class="segment-option active" aria-pressed="true">Matemático (1,1)</button><button id="iter-coord-prog" type="button" class="segment-option" aria-pressed="false">Programador (0,0)</button></div></fieldset>
+    </div>
+    <div id="iter-entry-area" class="iter-entry-area" aria-live="polite"></div>
+    <div class="iter-initial-settings">
+      <div class="iter-vector-input-wrap"><h3>Vector inicial X⁽⁰⁾</h3><p class="muted small">Escribe una aproximación inicial para cada incógnita. Por defecto todos los valores son cero.</p><div id="iter-x0-grid" class="iter-vector-fields"></div></div>
+      <div class="iter-numeric-settings">
+        <label class="iter-field">Tolerancia ε<input id="iter-tolerance" type="number" min="0.000000000001" max="1" step="any" value="0.0001" inputmode="decimal"><small>Se exige que el residuo y el cambio máximo sean ≤ ε.</small></label>
+        <label class="iter-field">Máximo de iteraciones<input id="iter-max" type="number" min="1" max="1000" step="1" value="100" inputmode="numeric"><small>El cálculo se detiene antes si cumple la tolerancia.</small></label>
+        <label class="iter-option-check"><input id="iter-reorder" type="checkbox" checked><span>Reordenar ecuaciones si hay ceros en la diagonal</span></label>
+      </div>
+    </div>
+    <div id="iter-keyboard" class="iter-keyboard" hidden><div class="iter-keyboard-head"><strong>Teclado matemático</strong><button type="button" id="iter-keyboard-close" aria-label="Cerrar teclado">×</button></div><div class="iter-keyboard-grid" id="iter-keyboard-keys"></div></div>
+    <div class="iter-actions"><button id="iter-solve" type="button" class="btn btn-primary">Resolver por Jacobi <span aria-hidden="true">→</span></button><button id="iter-example" type="button" class="btn btn-subtle">✧ Cargar ejemplo 4×4</button><button id="iter-clear" type="button" class="btn btn-subtle">Limpiar datos</button></div>
+    <div id="iter-feedback" class="feedback" role="status" aria-live="polite" hidden></div>
+    <div class="lab-choco-note" id="iter-choco">☕ Choco dice: en ambos métodos se utiliza un vector inicial, no un intervalo [a, b].</div>
+  </section>
+
+  <div class="iter-content-flow">
+    <section class="panel iter-section iter-diagnostic" id="iter-diagnostic">
+      <div class="iter-section-head"><span class="step-dot">02</span><div><span class="overline">ANTES DE ITERAR</span><h2>Diagnóstico y despejes</h2><p>La diagonal de A, la dominancia diagonal y las fórmulas de actualización.</p></div></div>
+      <div id="iter-diagnostic-body" class="iter-placeholder">Al resolver, Choco Lab comprobará cada fila y mostrará los despejes que utilizará.</div>
+    </section>
+
+    <section class="panel iter-section iter-development" id="iter-development">
+      <div class="iter-section-head"><span class="step-dot">04</span><div><span class="overline">LABORATORIO MATEMÁTICO</span><h2 id="iter-development-title">Actualización simultánea</h2><p id="iter-development-sub">Observa el vector anterior y el nuevo, junto con todas las sustituciones de la iteración elegida.</p></div></div>
+      <div id="iter-vector-comparator" class="iter-vector-comparator"></div>
+      <div class="iter-step-toolbar"><div><strong>Desarrollo de la iteración</strong><span id="iter-step-counter" class="muted small">—</span></div><div class="iter-step-buttons"><button id="iter-prev" class="btn btn-subtle" disabled>← Anterior</button><button id="iter-next" class="btn btn-subtle" disabled>Siguiente →</button><button id="iter-all" class="btn btn-secondary" disabled>Mostrar todos los pasos</button></div></div>
+      <div id="iter-development-body" class="iter-development-body"><div class="iter-placeholder">Selecciona una iteración de la tabla para ver cada sustitución matemática.</div></div>
+    </section>
+
+    <section class="panel iter-section iter-graphs" id="iter-graph-section">
+      <div class="iter-section-head"><span class="step-dot">03</span><div><span class="overline">CONVERGENCIA VISUAL</span><h2>Evolución de todas las incógnitas</h2><p>Las líneas de todas las variables permanecen visibles. Acerca o aleja la gráfica con la rueda del mouse y selecciona una iteración para destacar sus puntos.</p></div></div>
+      <div class="iter-plot" id="iter-variable-plot" role="img" aria-label="Gráfica de las aproximaciones de todas las incógnitas"></div>
+      <div class="iter-plot-caption" id="iter-plot-caption">Cada línea representa una incógnita; selecciona un punto o una fila para observar los cálculos.</div>
+      <div class="iter-mini-plot-head"><h3>Precisión del proceso</h3><p class="muted small">Residuo ‖b − AX⁽ᵏ⁾‖∞ y cambio ‖X⁽ᵏ⁾ − X⁽ᵏ⁻¹⁾‖∞; línea punteada: tolerancia.</p></div>
+      <div class="iter-plot iter-plot-small" id="iter-error-plot" role="img" aria-label="Evolución del residuo y cambio máximo"></div>
+      <div class="iter-results" id="iter-results"><div class="iter-placeholder">Los resultados se mostrarán después de resolver.</div></div>
+    </section>
+
+    <section class="panel iter-section iter-table" id="iter-table-section">
+      <div class="iter-section-head"><span class="step-dot">05</span><div><span class="overline">REGISTRO NUMÉRICO</span><h2>Tabla de iteraciones</h2><p>Valores presentados con máximo seis decimales; el cálculo y el CSV conservan su precisión interna. Selecciona una fila para estudiar su desarrollo.</p></div></div>
+      <div class="iter-table-toolbar"><span id="iter-table-status" class="muted small">Sin resolver</span><button id="iter-csv" class="btn btn-subtle" disabled>↓ Exportar CSV</button></div>
+      <div class="table-scroll iter-table-scroll"><table class="data-table iter-data-table"><thead id="iter-table-head"></thead><tbody id="iter-table-body"><tr><td class="empty-cell">Aquí aparecerán todas las iteraciones, incluida X⁽⁰⁾.</td></tr></tbody></table></div>
+    </section>
+
+    <section class="panel iter-section iter-verify" id="iter-verify-section">
+      <div class="iter-section-head"><span class="step-dot">06</span><div><span class="overline">COMPROBACIÓN</span><h2>Resultado y verificación matricial</h2><p>Comprueba la aproximación calculando AX, el residuo b − AX y los dos criterios de parada.</p></div></div>
+      <div id="iter-verification-body" class="iter-placeholder">La verificación aparecerá al resolver el sistema.</div>
+    </section>
+
+    <section class="panel iter-section iter-compare" id="iter-compare-section">
+      <div class="iter-section-head"><span class="step-dot">07</span><div><span class="overline">ANÁLISIS COMPARATIVO</span><h2>Jacobi frente a Gauss-Seidel</h2><p>Ejecuta ambos con el mismo sistema, vector inicial, tolerancia y límite de iteraciones.</p></div></div>
+      <div class="iter-actions"><button id="iter-compare-btn" type="button" class="btn btn-secondary" disabled>⇄ Comparar los dos métodos</button></div>
+      <div id="iter-comparison-body" class="iter-placeholder">Resuelve primero el sistema. Después usa el botón de esta sección para comparar ambos métodos con los mismos datos.</div>
+      <div id="iter-comparison-plot" class="iter-plot iter-plot-small" hidden></div>
+    </section>
+  </div>
+</section>

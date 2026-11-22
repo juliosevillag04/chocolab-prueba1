@@ -1,0 +1,94 @@
+/* Choco Lab · Álgebra Lineal y Temas Complementarios.
+   Paleta heredada: usa las mismas variables del tema claro/oscuro original. */
+.lab-hero .catalog-decor{font-size:clamp(3.2rem,6vw,6rem);white-space:nowrap}
+.lab-four-cards .catalog-card strong{line-height:1.35}
+.lab-heading{margin-bottom:20px}
+.lab-heading-icon{flex:0 0 auto;min-width:126px;text-align:center;border:1px solid var(--border));background:var(--surface2);padding:22px 16px;border-radius:18px;font-size:clamp(24px,3vw,43px);font-family:Georgia,serif;color:var(--accent)}
+.lab-workspace{align-items:start}
+.lab-control-panel{overflow:visible}
+.lab-control-group{margin:13px 0}
+.lab-segment{display:flex;width:100%;gap:1px}
+.lab-segment .segment-option{flex:1;min-width:0;line-height:1.3;font-size:12px;padding:10px 5px}
+.lab-dynamic-controls{display:flex;flex-direction:column;gap:14px;margin:20px 0 15px}
+.lab-fieldset{display:flex;flex-direction:column;gap:7px;min-width:0}
+.lab-fieldset>label,.lab-control-panel .lab-mini-label{font-size:12px;font-weight:700;letter-spacing:.015em;color:var(--ink)}
+.lab-control-panel input,.lab-control-panel select,.lab-control-panel textarea{width:100%;max-width:100%;border:1px solid var(--border);border-radius:10px;padding:10px 11px;background:var(--input-bg,var(--surface,#fff));color:var(--ink);font:inherit;font-size:14px;outline-offset:2px}
+.lab-control-panel input:focus,.lab-control-panel select:focus,.lab-control-panel textarea:focus{border-color:#b8865a;box-shadow:0 0 0 3px rgba(184,134,90,.13)}
+.lab-control-panel textarea{min-height:75px;resize:vertical}
+.lab-two-inputs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.lab-inline-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lab-small-btn{border:1px solid var(--border);border-radius:10px;padding:9px 12px;background:var(--surface);color:var(--ink);font-size:12px;font-weight:700;cursor:pointer}
+.lab-small-btn:hover{border-color:var(--accent)}
+.lab-hint{font-size:12px;line-height:1.55;color:var(--ink-muted);margin:0}
+.lab-matrix-section{min-width:0;border:1px solid var(--border);border-radius:14px;padding:12px;background:var(--surface2)}
+.lab-matrix-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:10px;font-size:12px;font-weight:750}
+.lab-matrix-scroll{overflow:auto;max-width:100%;padding:2px 0 4px}
+.lab-brackets{display:flex;align-items:stretch;gap:5px;width:max-content;max-width:none;min-width:0}
+.lab-bracket{border-top:2px solid var(--ink);border-bottom:2px solid var(--ink);width:7px;flex-shrink:0}
+.lab-bracket.left{border-left:2px solid var(--ink)}.lab-bracket.right{border-right:2px solid var(--ink)}
+.lab-cell-grid{display:grid;gap:5px;align-items:center}
+.lab-cell-grid input{width:57px;min-width:57px;max-width:57px;padding:8px 4px;text-align:center;border-radius:6px;font-size:12px;font-variant-numeric:tabular-nums}
+.lab-cell-grid input.is-error{background:#ffebe9;border-color:#d15448}
+.lab-cell-grid .lab-cell-separator{border-left:2px dashed #bc946d;padding-left:6px}
+.lab-coordinate-label{font-size:10px;color:var(--ink-muted);text-align:center;min-height:13px}
+.lab-matrix-display{display:inline-flex;align-items:stretch;gap:8px;max-width:100%;overflow:auto;margin:8px 0;vertical-align:middle}
+.lab-display-bracket{width:9px;border:2px solid var(--ink);border-right:0;border-radius:4px 0 0 4px;flex:none}
+.lab-display-bracket.right{border:2px solid var(--ink);border-left:0;border-radius:0 4px 4px 0}
+.lab-matrix-table{border-collapse:separate;border-spacing:12px 7px;font:500 16px 'Cambria Math',Georgia,serif;text-align:center;white-space:nowrap;color:var(--ink)}
+.lab-matrix-table td{padding:1px 0;min-width:18px}
+.lab-matrix-table td.is-b{border-left:2px dashed #bd996e;padding-left:14px}
+.lab-visual-body{min-height:270px;padding:19px 21px;display:flex;flex-direction:column;gap:14px}
+.lab-empty{display:flex;min-height:215px;flex-direction:column;justify-content:center;align-items:center;gap:10px;text-align:center;color:var(--ink-muted)}
+.lab-empty>span{font-size:46px;font-family:Georgia,serif;color:#bc936e}
+.lab-empty strong{font-size:16px;color:var(--ink)}
+.lab-empty p{max-width:290px;line-height:1.5;margin:0;font-size:13px}
+.lab-result-label{font-size:11px;font-weight:800;letter-spacing:.10em;text-transform:uppercase;color:var(--ink-muted)}
+.lab-result-title{font-size:clamp(21px,3vw,31px);font-weight:750;line-height:1.25;overflow-wrap:anywhere}
+.lab-result-block{padding:14px 16px;border:1px solid var(--border);border-radius:13px;background:var(--surface2);min-width:0;overflow:auto}
+.lab-result-block .lab-result-label{margin-bottom:8px}
+.lab-result-block .lab-matrix-table{font-size:15px}
+.lab-inline-matrices{display:flex;flex-wrap:wrap;align-items:flex-start;gap:17px}
+.lab-inline-matrices .lab-result-block{flex:1 1 180px}
+.lab-summary .metric strong{overflow-wrap:anywhere;line-height:1.25;font-size:clamp(18px,2.1vw,26px)}
+.lab-steps{margin-top:24px;overflow:hidden}
+.lab-steps-body{display:flex;flex-direction:column;gap:10px;padding:16px 23px;max-height:570px;overflow:auto}
+.lab-step-card{border:1px solid var(--border);background:var(--surface2);border-radius:13px;padding:13px 15px;text-align:left;width:100%;color:var(--ink);cursor:pointer}
+.lab-step-card.active{border-color:#b78355;box-shadow:0 0 0 2px rgba(179,124,73,.15)}
+.lab-step-card .lab-step-top{display:flex;gap:12px;justify-content:space-between;align-items:baseline;font-size:13px;font-weight:700}
+.lab-step-card .lab-step-top>small{color:var(--ink-muted);font-weight:500}
+.lab-step-card .lab-step-description{margin-top:8px;font-size:13px;line-height:1.55;color:var(--ink-muted)}
+.lab-step-card .lab-matrix-display{margin-top:9px}
+.lab-choco-note{border-left:3px solid #bd8b63;padding:10px 12px;border-radius:0 9px 9px 0;background:rgba(176,132,88,.095);font-size:12px;line-height:1.55;color:var(--ink);margin-top:10px}
+.lab-keyboard{position:sticky;bottom:10px;z-index:4;padding:12px;background:var(--surface,#fff);border:1px solid var(--border);border-radius:13px;box-shadow:0 10px 25px rgba(45,30,18,.12)}
+.lab-keyboard-title{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:750;margin-bottom:9px}
+.lab-keyboard-title button{background:none;border:0;font-size:21px;color:var(--ink);cursor:pointer}
+.lab-key-row{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px}
+.lab-key-row button{padding:9px 2px;border:1px solid var(--border);border-radius:7px;font-size:13px;background:var(--surface2);color:var(--ink);cursor:pointer;min-width:0}
+.lab-key-row button:hover{background:rgba(190,145,101,.16)}
+.lab-keyboard-toggle{font-size:13px;white-space:nowrap}
+.lab-object-list{display:flex;flex-wrap:wrap;gap:7px}
+.lab-object-pill{display:flex;align-items:center;gap:5px;padding:6px 8px;border:1px solid var(--border);border-radius:9px;font-size:12px;max-width:100%;background:var(--surface2)}
+.lab-object-pill button{border:0;background:transparent;cursor:pointer;color:var(--ink);font-size:15px}
+.lab-expression-input{font-family:'Cambria Math',Georgia,serif!important;font-size:18px!important;min-height:48px}
+.lab-checkbox-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.lab-check{display:flex;align-items:center;gap:8px;padding:9px;border-radius:9px;border:1px solid var(--border);font-size:12px;cursor:pointer}
+.lab-check input{width:auto;max-width:none;flex:none;margin:0}
+.lab-math-preview{display:block;min-height:40px;padding:10px;border-radius:9px;border:1px solid var(--border);margin-top:6px;background:var(--surface2);font-size:17px}
+.lab-math-preview[hidden]{display:none}
+.lab-selected-cell{padding:6px 10px;border-radius:7px;background:rgba(185,145,104,.12);font-size:11px;color:var(--ink-muted)}
+@media(max-width:900px){.lab-heading-icon{display:none}.lab-workspace{grid-template-columns:1fr}.lab-four-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.lab-four-cards{grid-template-columns:1fr}.lab-two-inputs{grid-template-columns:repeat(2,minmax(0,1fr))}.lab-cell-grid input{width:49px;min-width:49px;max-width:49px}.lab-visual-body{padding:14px}.lab-steps-body{padding:12px}.lab-key-row{grid-template-columns:repeat(5,minmax(0,1fr))}}
+
+/* Inicio: tres áreas con proporciones consistentes. */
+@media(min-width:1000px){.module-grid:has(.module-card:nth-child(3)){grid-template-columns:repeat(3,minmax(0,1fr))}}
+.lab-visual .plot-toolbar{padding:19px 21px 14px;border-bottom:1px solid var(--border)}
+.lab-page .lab-choco-note{background:color-mix(in srgb,var(--accent) 10%,var(--surface));color:var(--ink)}
+.lab-page .lab-parameter{padding:6px 0;font:500 16px 'Cambria Math',Georgia,serif}
+.lab-page .lab-parameter b{color:var(--brown)}
+.lab-page .lab-expression-math{width:100%;min-height:52px;border:1px solid var(--border);border-radius:9px;padding:9px;background:var(--surface2);font-size:19px;color:var(--ink);--caret-color:var(--accent)}
+.lab-result-block p{line-height:1.55;font-size:13px;color:var(--ink-muted)}
+.lab-page .lab-result-block code{font-size:13px;white-space:normal;overflow-wrap:anywhere}
+.lab-page .lab-control-panel .lab-fieldset>label{color:var(--ink)}
+@media(max-width:999px) and (min-width:541px){.module-grid:has(.module-card:nth-child(3)){grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.lab-four-cards .catalog-card-symbol{width:56px;min-width:56px;font-size:18px;letter-spacing:-.6px}

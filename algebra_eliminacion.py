@@ -217,8 +217,7 @@ def validar_matriz_aumentada(matriz, numero_variables):
 # =========================================================
 
 _PATRON_NUMERO = (
-    r"(?:\d+(?:[.,]\d*)?|[.,]\d+)"
-    r"(?:[eE][+-]?\d+)?"
+    r"(?:\d+/\d+|(?:\d+(?:[.,]\d*)?|[.,]\d+)(?:[eE][+-]?\d+)?)"
 )
 
 # Una variable comienza con una letra y puede continuar con letras,
@@ -256,8 +255,8 @@ def _leer_expresion_lineal(expresion, nombres_variables):
     if expresion[0] not in "+-":
         expresion = "+" + expresion
 
-    coeficientes = [0.0] * len(nombres_variables)
-    constante = 0.0
+    coeficientes = [Fraction(0)] * len(nombres_variables)
+    constante = Fraction(0)
     posicion = 0
 
     while posicion < len(expresion):
@@ -277,7 +276,7 @@ def _leer_expresion_lineal(expresion, nombres_variables):
         termino = coincidencia.group()
         posicion = coincidencia.end()
 
-        signo = -1.0 if termino[0] == "-" else 1.0
+        signo = -1 if termino[0] == "-" else 1
         contenido = termino[1:]
 
         variable = re.fullmatch(
@@ -301,9 +300,9 @@ def _leer_expresion_lineal(expresion, nombres_variables):
             texto_coeficiente = variable.group("coeficiente")
 
             if texto_coeficiente is None:
-                coeficiente = 1.0
+                coeficiente = 1
             else:
-                coeficiente = float(
+                coeficiente = Fraction(
                     texto_coeficiente.replace(",", ".")
                 )
 
@@ -311,7 +310,7 @@ def _leer_expresion_lineal(expresion, nombres_variables):
 
         else:
 
-            constante += signo * float(
+            constante += signo * Fraction(
                 contenido.replace(",", ".")
             )
 
@@ -329,7 +328,10 @@ def extraer_variables(ecuacion):
     )
     nombres = []
 
-    for nombre in re.findall(_PATRON_VARIABLE, texto):
+    for token in re.finditer(rf"{_PATRON_NUMERO}|(?P<variable>{_PATRON_VARIABLE})", texto):
+        nombre = token.group("variable")
+        if nombre is None:
+            continue
         nombre = nombre.lower()
         if nombre not in nombres:
             nombres.append(nombre)
@@ -407,7 +409,6 @@ def convertir_ecuacion_a_fila(
         constante_derecha - constante_izquierda
     )
 
-    _limpiar_ceros([fila])
 
     return fila
 
@@ -463,7 +464,8 @@ def _limpiar_ceros(matriz, tolerancia=TOLERANCIA):
 
         for columna in range(len(matriz[fila])):
 
-            if abs(matriz[fila][columna]) < tolerancia:
+            valor = matriz[fila][columna]
+            if isinstance(valor, float) and abs(valor) < tolerancia:
                 matriz[fila][columna] = 0.0
 
 
@@ -475,6 +477,8 @@ def _numero_corto(numero):
     algebraicamente el factor correcto puede escribirse como 3/8.
     """
 
+    if isinstance(numero, Fraction):
+        return str(numero)
     if abs(numero) < TOLERANCIA:
         return "0"
 
@@ -489,14 +493,15 @@ def _numero_corto(numero):
     return f"{numero:.6g}"
 
 
-def _registrar_paso(pasos, fase, operacion, matriz):
+def _registrar_paso(pasos, fase, operacion, matriz, **detalle):
     """Guarda una operación y una copia de la matriz resultante."""
 
     pasos.append(
         {
             "fase": fase,
             "operacion": operacion,
-            "matriz": copiar_matriz(matriz)
+            "matriz": copiar_matriz(matriz),
+            **detalle
         }
     )
 
@@ -516,28 +521,28 @@ def _buscar_mejor_fila_pivote(matriz, fila_inicial, columna, tolerancia):
     """
 
     # 1. El pivote actual ya es 1.
-    if abs(matriz[fila_inicial][columna] - 1.0) < tolerancia:
+    if _es_uno_exacto(matriz[fila_inicial][columna], tolerancia):
         return fila_inicial
 
     # 2. Buscar un 1 en las filas disponibles.
     for fila in range(fila_inicial + 1, len(matriz)):
 
-        if abs(matriz[fila][columna] - 1.0) < tolerancia:
+        if _es_uno_exacto(matriz[fila][columna], tolerancia):
             return fila
 
     # 3. Aprovechar un -1 si existe.
-    if abs(matriz[fila_inicial][columna] + 1.0) < tolerancia:
+    if _es_uno_exacto(-matriz[fila_inicial][columna], tolerancia):
         return fila_inicial
 
     for fila in range(fila_inicial + 1, len(matriz)):
 
-        if abs(matriz[fila][columna] + 1.0) < tolerancia:
+        if _es_uno_exacto(-matriz[fila][columna], tolerancia):
             return fila
 
     # 4. En ausencia de ±1, usar la primera entrada no nula.
     for fila in range(fila_inicial, len(matriz)):
 
-        if abs(matriz[fila][columna]) >= tolerancia:
+        if not _es_cero_exacto(matriz[fila][columna], tolerancia):
             return fila
 
     return None
@@ -558,13 +563,13 @@ def _buscar_fila_inconsistente(matriz, numero_variables, tolerancia):
 
         for columna in range(numero_variables):
 
-            if abs(matriz[indice_fila][columna]) >= tolerancia:
+            if not _es_cero_exacto(matriz[indice_fila][columna], tolerancia):
                 coeficientes_en_cero = False
                 break
 
         termino_independiente = matriz[indice_fila][numero_variables]
 
-        if coeficientes_en_cero and abs(termino_independiente) >= tolerancia:
+        if coeficientes_en_cero and not _es_cero_exacto(termino_independiente, tolerancia):
             return indice_fila
 
     return None
@@ -649,13 +654,14 @@ def resolver_sistema(matriz_aumentada, numero_variables, tolerancia=TOLERANCIA):
                 pasos,
                 "escalonamiento",
                 f"F{fila_pivote + 1} ↔ F{mejor_fila + 1}",
-                matriz
+                matriz,
+                tipo="intercambio", fila=fila_pivote, otra=mejor_fila, columna=columna_pivote
             )
 
         # PRIMERO: convertir el pivote actual en 1.
         pivote = matriz[fila_pivote][columna_pivote]
 
-        if abs(pivote - 1.0) >= tolerancia:
+        if not _es_uno_exacto(pivote, tolerancia):
 
             for columna in range(columna_pivote, numero_columnas):
 
@@ -670,9 +676,10 @@ def resolver_sistema(matriz_aumentada, numero_variables, tolerancia=TOLERANCIA):
                 "escalonamiento",
                 (
                     f"F{fila_pivote + 1} → "
-                    f"({_numero_corto(1.0 / pivote)})F{fila_pivote + 1}"
+                    f"({_numero_corto(1 / pivote)})F{fila_pivote + 1}"
                 ),
-                matriz
+                matriz,
+                tipo="escalar", fila=fila_pivote, columna=columna_pivote, factor=1 / pivote
             )
 
         # DESPUÉS: crear ceros debajo del pivote 1.
@@ -680,7 +687,7 @@ def resolver_sistema(matriz_aumentada, numero_variables, tolerancia=TOLERANCIA):
 
             elemento = matriz[fila][columna_pivote]
 
-            if abs(elemento) < tolerancia:
+            if _es_cero_exacto(elemento, tolerancia):
                 continue
 
             factor = elemento
@@ -701,7 +708,8 @@ def resolver_sistema(matriz_aumentada, numero_variables, tolerancia=TOLERANCIA):
                     f"F{fila + 1} → F{fila + 1} "
                     f"- ({_numero_corto(factor)})F{fila_pivote + 1}"
                 ),
-                matriz
+                matriz,
+                tipo="eliminar", fila=fila, otra=fila_pivote, columna=columna_pivote, factor=factor
             )
 
         pivotes.append(
@@ -752,7 +760,7 @@ def resolver_sistema(matriz_aumentada, numero_variables, tolerancia=TOLERANCIA):
 
             factor = matriz[fila][columna_pivote]
 
-            if abs(factor) < tolerancia:
+            if _es_cero_exacto(factor, tolerancia):
                 continue
 
             for columna in range(columna_pivote, numero_columnas):
@@ -771,7 +779,8 @@ def resolver_sistema(matriz_aumentada, numero_variables, tolerancia=TOLERANCIA):
                     f"F{fila + 1} → F{fila + 1} "
                     f"- ({_numero_corto(factor)})F{fila_pivote + 1}"
                 ),
-                matriz
+                matriz,
+                tipo="eliminar", fila=fila, otra=fila_pivote, columna=columna_pivote, factor=factor
             )
 
     matriz_reducida = copiar_matriz(matriz)
@@ -828,6 +837,307 @@ def resolver_sistema(matriz_aumentada, numero_variables, tolerancia=TOLERANCIA):
         "fila_inconsistente": None,
         "solucion": None,
         "variables_libres": variables_libres
+    }
+
+
+# =========================================================
+# INVERSA DE UNA MATRIZ MEDIANTE GAUSS-JORDAN
+# =========================================================
+
+def _a_fraccion_exacta(valor):
+    """Convierte una entrada numérica a Fraction sin perder decimales escritos."""
+
+    if isinstance(valor, Fraction):
+        return valor
+
+    if isinstance(valor, int):
+        return Fraction(valor)
+
+    if isinstance(valor, float):
+        return Fraction(str(valor))
+
+    try:
+        return Fraction(valor)
+    except (TypeError, ValueError, ZeroDivisionError):
+        raise ValueError(f"La entrada {valor!r} no es un número válido.") from None
+
+
+def _es_cero_exacto(valor, tolerancia=TOLERANCIA):
+    """Prueba de cero compatible con Fraction y con valores decimales."""
+
+    if isinstance(valor, Fraction):
+        return valor == 0
+    return abs(float(valor)) < tolerancia
+
+
+def _es_uno_exacto(valor, tolerancia=TOLERANCIA):
+    """Prueba de uno compatible con Fraction y con valores decimales."""
+
+    if isinstance(valor, Fraction):
+        return valor == 1
+    return abs(float(valor) - 1.0) < tolerancia
+
+
+def _buscar_pivote_inversa(matriz, fila_inicial, columna, tolerancia=TOLERANCIA):
+    """Busca un pivote útil, priorizando 1 y -1 como en resolver_sistema."""
+
+    if fila_inicial >= len(matriz):
+        return None
+
+    if _es_uno_exacto(matriz[fila_inicial][columna], tolerancia):
+        return fila_inicial
+
+    for fila in range(fila_inicial + 1, len(matriz)):
+        if _es_uno_exacto(matriz[fila][columna], tolerancia):
+            return fila
+
+    if matriz[fila_inicial][columna] == -1:
+        return fila_inicial
+
+    for fila in range(fila_inicial + 1, len(matriz)):
+        if matriz[fila][columna] == -1:
+            return fila
+
+    for fila in range(fila_inicial, len(matriz)):
+        if not _es_cero_exacto(matriz[fila][columna], tolerancia):
+            return fila
+
+    return None
+
+
+def _multiplicar_matrices_exactas(a, b):
+    """Producto matricial exacto usado para verificar la inversa obtenida."""
+
+    if not a or not b or len(a[0]) != len(b):
+        raise ValueError("Las dimensiones de las matrices no permiten el producto.")
+
+    filas_a = len(a)
+    columnas_a = len(a[0])
+    columnas_b = len(b[0])
+
+    return [
+        [
+            sum(
+                (a[i][k] * b[k][j] for k in range(columnas_a)),
+                Fraction(0)
+            )
+            for j in range(columnas_b)
+        ]
+        for i in range(filas_a)
+    ]
+
+
+def invertir_matriz_gauss_jordan(matriz, tolerancia=TOLERANCIA):
+    """Calcula A^-1 reduciendo por filas la matriz aumentada [A | I].
+
+    La rutina sigue la misma lógica de ``resolver_sistema``: primero realiza
+    Gauss (pivotes en 1 y ceros debajo) y después Gauss-Jordan (ceros arriba).
+    La diferencia es que aquí se arrastran n columnas de términos derechos,
+    correspondientes a la matriz identidad. Si el bloque izquierdo llega a I,
+    el bloque derecho es A^-1. Si falta un pivote, A es singular y no tiene
+    inversa.
+
+    Retorna un diccionario con la matriz aumentada inicial, las matrices de
+    Gauss y Gauss-Jordan, los pasos, la inversa y las dos verificaciones
+    A·A^-1 y A^-1·A.
+    """
+
+    if not isinstance(matriz, list) or not matriz:
+        raise ValueError("Debes proporcionar una matriz no vacía.")
+
+    orden = len(matriz)
+
+    for fila in matriz:
+        if not isinstance(fila, list) or len(fila) != orden:
+            raise ValueError("La inversa solo se puede calcular para una matriz cuadrada.")
+        for valor in fila:
+            if not numero_finito(valor):
+                raise ValueError("La matriz contiene un valor no numérico o no finito.")
+
+    original = [
+        [_a_fraccion_exacta(valor) for valor in fila]
+        for fila in matriz
+    ]
+
+    identidad = [
+        [Fraction(1 if i == j else 0) for j in range(orden)]
+        for i in range(orden)
+    ]
+
+    aumentada = [
+        original[i][:] + identidad[i][:]
+        for i in range(orden)
+    ]
+    inicial = copiar_matriz(aumentada)
+
+    pasos = []
+    pivotes = []
+    total_columnas = 2 * orden
+
+    # -----------------------------------------------------
+    # FASE 1: GAUSS
+    # -----------------------------------------------------
+    for columna_pivote in range(orden):
+        fila_pivote = columna_pivote
+        mejor_fila = _buscar_pivote_inversa(
+            aumentada,
+            fila_pivote,
+            columna_pivote,
+            tolerancia
+        )
+
+        if mejor_fila is None:
+            matriz_gauss = copiar_matriz(aumentada)
+            return {
+                "clasificacion": "singular",
+                "invertible": False,
+                "orden": orden,
+                "matriz_original": copiar_matriz(original),
+                "matriz_aumentada_inicial": inicial,
+                "matriz_escalonada": matriz_gauss,
+                "matriz_reducida": matriz_gauss,
+                "matriz_gauss": matriz_gauss,
+                "matriz_gauss_jordan": matriz_gauss,
+                "pasos": pasos,
+                "pivotes": pivotes,
+                "columna_sin_pivote": columna_pivote,
+                "inversa": None,
+                "producto_a_inversa": None,
+                "producto_inversa_a": None
+            }
+
+        if mejor_fila != fila_pivote:
+            aumentada[fila_pivote], aumentada[mejor_fila] = (
+                aumentada[mejor_fila],
+                aumentada[fila_pivote]
+            )
+            _registrar_paso(
+                pasos,
+                "escalonamiento",
+                f"F{fila_pivote + 1} ↔ F{mejor_fila + 1}",
+                aumentada,
+                tipo="intercambio", fila=fila_pivote, otra=mejor_fila, columna=columna_pivote
+            )
+
+        pivote = aumentada[fila_pivote][columna_pivote]
+
+        if not _es_uno_exacto(pivote, tolerancia):
+            factor_escala = Fraction(1, 1) / pivote
+            aumentada[fila_pivote] = [
+                valor * factor_escala
+                for valor in aumentada[fila_pivote]
+            ]
+            _registrar_paso(
+                pasos,
+                "escalonamiento",
+                (
+                    f"F{fila_pivote + 1} → "
+                    f"({_numero_corto(factor_escala)})F{fila_pivote + 1}"
+                ),
+                aumentada,
+                tipo="escalar", fila=fila_pivote, columna=columna_pivote, factor=1 / pivote
+            )
+
+        for fila in range(fila_pivote + 1, orden):
+            factor = aumentada[fila][columna_pivote]
+
+            if _es_cero_exacto(factor, tolerancia):
+                continue
+
+            aumentada[fila] = [
+                aumentada[fila][columna]
+                - factor * aumentada[fila_pivote][columna]
+                for columna in range(total_columnas)
+            ]
+            _registrar_paso(
+                pasos,
+                "escalonamiento",
+                (
+                    f"F{fila + 1} → F{fila + 1} "
+                    f"- ({_numero_corto(factor)})F{fila_pivote + 1}"
+                ),
+                aumentada,
+                tipo="eliminar", fila=fila, otra=fila_pivote, columna=columna_pivote, factor=factor
+            )
+
+        pivotes.append((fila_pivote, columna_pivote))
+
+    matriz_gauss = copiar_matriz(aumentada)
+
+    # -----------------------------------------------------
+    # FASE 2: GAUSS-JORDAN
+    # -----------------------------------------------------
+    for fila_pivote, columna_pivote in reversed(pivotes):
+        for fila in range(fila_pivote):
+            factor = aumentada[fila][columna_pivote]
+
+            if _es_cero_exacto(factor, tolerancia):
+                continue
+
+            aumentada[fila] = [
+                aumentada[fila][columna]
+                - factor * aumentada[fila_pivote][columna]
+                for columna in range(total_columnas)
+            ]
+            _registrar_paso(
+                pasos,
+                "reduccion",
+                (
+                    f"F{fila + 1} → F{fila + 1} "
+                    f"- ({_numero_corto(factor)})F{fila_pivote + 1}"
+                ),
+                aumentada,
+                tipo="eliminar", fila=fila, otra=fila_pivote, columna=columna_pivote, factor=factor
+            )
+
+    matriz_reducida = copiar_matriz(aumentada)
+
+    bloque_izquierdo = [fila[:orden] for fila in matriz_reducida]
+    es_identidad = all(
+        bloque_izquierdo[i][j] == (1 if i == j else 0)
+        for i in range(orden)
+        for j in range(orden)
+    )
+
+    if not es_identidad:
+        return {
+            "clasificacion": "singular",
+            "invertible": False,
+            "orden": orden,
+            "matriz_original": copiar_matriz(original),
+            "matriz_aumentada_inicial": inicial,
+            "matriz_escalonada": matriz_gauss,
+            "matriz_reducida": matriz_reducida,
+            "matriz_gauss": matriz_gauss,
+            "matriz_gauss_jordan": matriz_reducida,
+            "pasos": pasos,
+            "pivotes": pivotes,
+            "columna_sin_pivote": None,
+            "inversa": None,
+            "producto_a_inversa": None,
+            "producto_inversa_a": None
+        }
+
+    inversa = [fila[orden:] for fila in matriz_reducida]
+    producto_a_inversa = _multiplicar_matrices_exactas(original, inversa)
+    producto_inversa_a = _multiplicar_matrices_exactas(inversa, original)
+
+    return {
+        "clasificacion": "invertible",
+        "invertible": True,
+        "orden": orden,
+        "matriz_original": copiar_matriz(original),
+        "matriz_aumentada_inicial": inicial,
+        "matriz_escalonada": matriz_gauss,
+        "matriz_reducida": matriz_reducida,
+        "matriz_gauss": matriz_gauss,
+        "matriz_gauss_jordan": matriz_reducida,
+        "pasos": pasos,
+        "pivotes": pivotes,
+        "columna_sin_pivote": None,
+        "inversa": copiar_matriz(inversa),
+        "producto_a_inversa": producto_a_inversa,
+        "producto_inversa_a": producto_inversa_a
     }
 
 

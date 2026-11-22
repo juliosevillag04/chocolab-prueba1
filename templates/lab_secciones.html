@@ -1,0 +1,66 @@
+<!-- Catálogos y áreas de trabajo del nuevo laboratorio -->
+<section id="view-algebra" class="view content-view lab-catalog" hidden>
+  <div class="breadcrumb"><button data-view="home">Inicio</button><span>/</span><span>Álgebra lineal</span></div>
+  <div class="catalog-hero lab-hero"><div><span class="overline">CHOCO LAB · ÁLGEBRA LINEAL</span><h1>Álgebra <em>Lineal</em></h1><p>Explora procedimientos, manipula matrices y vectores, y verifica los resultados paso a paso.</p></div><span class="catalog-decor" aria-hidden="true">Ax = b</span></div>
+  <div class="section-heading"><div><span class="overline">LABORATORIO DE ÁLGEBRA</span><h2>Selecciona qué deseas calcular</h2></div></div>
+  <div class="catalog-grid lab-four-cards">
+    <button class="catalog-card" data-view="linear-workspace" data-linear-tool="sistemas"><span class="catalog-card-top"><span class="catalog-card-symbol">[A|b]</span><span class="catalog-status">Disponible</span></span><strong>Sistemas lineales</strong><span>Gauss, Gauss-Jordan y factorización LU. Solución única, infinitas soluciones o inconsistencia.</span><span class="catalog-card-bottom">Resolución · Clasificación <b>↗</b></span></button>
+    <button class="catalog-card" data-view="linear-workspace" data-linear-tool="operaciones"><span class="catalog-card-top"><span class="catalog-card-symbol">A·u</span><span class="catalog-status">Disponible</span></span><strong>Operaciones matriciales y vectoriales</strong><span>Guarda matrices y vectores, evalúa A(u+v), productos, transpuesta e inversa.</span><span class="catalog-card-bottom">Operaciones libres · A⁻¹ <b>↗</b></span></button>
+    <button class="catalog-card" data-view="linear-workspace" data-linear-tool="combinaciones"><span class="catalog-card-top"><span class="catalog-card-symbol">Σv</span><span class="catalog-status">Disponible</span></span><strong>Combinaciones lineales</strong><span>Comprueba si un vector puede expresarse mediante otros y analiza sus relaciones.</span><span class="catalog-card-bottom">Generadores · Pesos <b>↗</b></span></button>
+    <button class="catalog-card" data-view="linear-workspace" data-linear-tool="determinantes"><span class="catalog-card-top"><span class="catalog-card-symbol">|A|</span><span class="catalog-status">Disponible</span></span><strong>Determinantes</strong><span>Cofactores, Sarrus, Gauss y LU, con análisis de eficiencia y comprobación.</span><span class="catalog-card-bottom">Cuatro métodos · Cálculo exacto <b>↗</b></span></button>
+  </div>
+</section>
+
+<section id="view-complementary" class="view content-view lab-catalog" hidden>
+  <div class="breadcrumb"><button data-view="home">Inicio</button><span>/</span><span>Temas complementarios</span></div>
+  <div class="catalog-hero lab-hero"><div><span class="overline">CHOCO LAB · EXPLORAR</span><h1>Temas <em>Complementarios</em></h1><p>Conversión de bases y numeración romana clásica y extendida, con procedimientos explicados.</p></div><span class="catalog-decor" aria-hidden="true">XIV · 101₂</span></div>
+  <div class="section-heading"><div><span class="overline">CONVERSIÓN Y OPERACIONES</span><h2>Selecciona una herramienta</h2></div></div>
+  <div class="catalog-grid">
+    <button class="catalog-card" data-view="complement-workspace" data-linear-tool="bases"><span class="catalog-card-top"><span class="catalog-card-symbol">₂ ₈ ₁₆</span><span class="catalog-status">Disponible</span></span><strong>Conversión de sistemas numéricos</strong><span>Decimal, binario, octal y hexadecimal; también números con parte fraccionaria.</span><span class="catalog-card-bottom">Bases 2, 8, 10 y 16 <b>↗</b></span></button>
+    <button class="catalog-card" data-view="complement-workspace" data-linear-tool="romanos"><span class="catalog-card-top"><span class="catalog-card-symbol">Ⅻ</span><span class="catalog-status">Disponible</span></span><strong>Números romanos</strong><span>Conversión arábigo-romano, vinculum para números grandes y operaciones mixtas.</span><span class="catalog-card-bottom">Conversión · Operaciones <b>↗</b></span></button>
+  </div>
+</section>
+
+<section id="view-linear-workspace" class="view content-view algebra-page" hidden>
+  <div class="breadcrumb"><button data-view="home">Inicio</button><span>/</span><button data-view="algebra">Álgebra lineal</button><span>/</span><span id="lab-breadcrumb"></span></div>
+  <header class="ax-heading"><div><h1 id="lab-title"></h1><p id="lab-desc"></p></div><span id="lab-symbol" class="ax-heading-symbol" aria-hidden="true"></span></header>
+  <section class="panel ax-section" id="lab-setup" aria-labelledby="lab-input-title">
+    <div class="ax-section-header"><div><h2 id="lab-input-title"></h2><p id="lab-input-hint"></p></div>
+      <details class="ax-prefs"><summary>Opciones de vista</summary>
+        <div class="ax-pref-controls">
+          <label>Coordenadas de entrada<select id="lab-coords"><option value="1">Matemático (1,1)</option><option value="0">Programador (0,0)</option></select></label>
+          <label>Resultados<select id="lab-format"><option value="fraction">Fracciones</option><option value="decimal">Decimales</option></select></label>
+          <label id="lab-rich-option" hidden><span><input type="checkbox" id="lab-rich"> Editor de símbolos</span></label>
+        </div>
+      </details>
+    </div>
+    <div class="ax-setup-body"><div id="lab-controls"></div>
+      <div id="lab-keyboard" class="ax-keyboard" hidden><div class="ax-subhead"><strong>Teclado matemático</strong><button type="button" data-action="close-keys" aria-label="Cerrar teclado">×</button></div><div id="lab-keys"></div></div>
+      <div class="ax-actions"><button type="button" class="btn btn-primary" id="lab-submit"></button><button type="button" class="btn btn-subtle" id="lab-example">Cargar ejemplo</button><button type="button" class="btn btn-subtle" id="lab-clear">Limpiar datos</button></div>
+      <p id="lab-feedback" role="status" aria-live="polite" hidden></p>
+    </div>
+  </section>
+  <div id="lab-output" hidden>
+    <nav class="ax-links" aria-label="Secciones del ejercicio"><a href="#lab-setup">Editar datos</a><a href="#lab-development">Desarrollo</a><a href="#lab-verification">Verificación</a><button type="button" id="lab-export">Descargar TXT ↓</button></nav>
+    <section class="panel ax-section" id="lab-development" tabindex="-1" aria-labelledby="lab-dev-title">
+      <div class="ax-section-header"><div><h2 id="lab-dev-title">Desarrollo</h2><p id="lab-summary"></p></div></div>
+      <div class="ax-step-nav"><label for="lab-step-select">Paso</label><select id="lab-step-select"></select>
+        <button type="button" id="lab-prev" class="btn btn-subtle">← Anterior</button><button type="button" id="lab-next" class="btn btn-subtle">Siguiente →</button></div>
+      <div id="lab-stage" aria-live="polite"></div>
+      <details id="lab-all" class="ax-index"><summary>Ver el recorrido completo</summary><ol id="lab-step-list"></ol></details>
+    </section>
+    <section class="panel ax-section" id="lab-verification" aria-labelledby="lab-proof-title">
+      <div class="ax-section-header"><div><h2 id="lab-proof-title">Resultado y verificación</h2></div></div>
+      <div id="lab-proof"></div>
+    </section>
+  </div>
+</section>
+
+<section id="view-complement-workspace" class="view content-view lab-page" hidden>
+  <div class="breadcrumb"><button data-view="home">Inicio</button><span>/</span><button data-view="complementary">Temas complementarios</button><span>/</span><span id="comp-breadcrumb">Conversión de bases</span></div>
+  <button class="back-to-methods" data-view="complementary">← Ver ambas herramientas</button>
+  <div class="methods-heading lab-heading"><div><span class="overline">TEMAS COMPLEMENTARIOS · CONVERSIÓN</span><h1 id="comp-title">Conversión de sistemas numéricos</h1><p id="comp-desc">De decimal a binario, octal y hexadecimal, y viceversa.</p></div><div class="lab-heading-icon" id="comp-symbol">₂ ₈ ₁₆</div></div>
+  <div class="workspace lab-workspace"><aside class="panel controls lab-control-panel"><div class="panel-head"><span class="step-dot">01</span><div><h2>Configurar ejercicio</h2><p>Elige la operación e introduce los datos</p></div></div><div id="comp-controls" class="lab-dynamic-controls"></div><button id="comp-submit" class="btn btn-primary full">Convertir <span aria-hidden="true">→</span></button><button id="comp-clear" class="btn btn-subtle full">Limpiar datos</button><div id="comp-feedback" class="feedback" role="status" hidden></div><div id="comp-choco" class="lab-choco-note">☕ Choco dice: también puedes escribir valores con parte fraccionaria.</div></aside>
+  <div class="result-area lab-result-area"><section class="panel lab-visual"><div class="plot-toolbar"><div><span class="overline">EQUIVALENCIAS Y CONVERSIÓN</span><h2>Resultado</h2></div><span class="hint-badge" id="comp-status">Sin convertir</span></div><div id="comp-visual" class="lab-visual-body"><div class="lab-empty"><span>Ⅰ</span><strong>Tu conversión aparecerá aquí.</strong><p>Con el desarrollo matemático correspondiente.</p></div></div></section></div></div>
+  <section class="panel lab-steps"><div class="iterations-header"><div><span class="overline">DESARROLLO</span><h2>Procedimiento explicado</h2></div><button id="comp-export" class="btn btn-subtle" disabled>↓ TXT</button></div><div id="comp-steps" class="lab-steps-body"><div class="empty-cell">El proceso se mostrará después de calcular.</div></div></section>
+</section>
